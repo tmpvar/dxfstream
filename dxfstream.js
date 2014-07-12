@@ -14,11 +14,15 @@ var section = null;
 
 var bool = function(val) {
   return !!parseInt(val);
-}
+};
+
+var hex = function(val) {
+  return parseInt(val, 16);
+};
 
 var processors = {};
 
-var pairWise = true, collect = [], header = { }, last = null;
+var pairWise = true, collect = [], header = null, last = null;
 var valueMap = {
   '1'  : ['text'],
   '2'  : ['name'],
@@ -28,7 +32,7 @@ var valueMap = {
   '6'  : ['lineType'],
   '7'  : ['textStyle'],
   '8'  : ['layerName'],
-  '9'  : ['variableName'],
+  '9'  : ['variable'],
   '10' : ['x', parseFloat],
   '20' : ['y', parseFloat],
   '30' : ['z', parseFloat],
@@ -128,6 +132,19 @@ var valueMap = {
   '298' : ['value', bool],
   '299' : ['value', bool],
 
+  // Hard-pointer handle; arbitrary hard pointers to other objects within same DXF
+  // file or drawing. Translated during INSERT and XREF operations
+  '340' : ['pointer', hex],
+  '341' : ['pointer', hex],
+  '342' : ['pointer', hex],
+  '343' : ['pointer', hex],
+  '344' : ['pointer', hex],
+  '345' : ['pointer', hex],
+  '346' : ['pointer', hex],
+  '347' : ['pointer', hex],
+  '348' : ['pointer', hex],
+  '349' : ['pointer', hex],
+
   // Lineweight enum value (AcDb::LineWeight).
   // Stored and moved around as a 16-bit integer.
   // Custom non-entity objects may use the full range,
@@ -145,7 +162,6 @@ var valueMap = {
   '377' : ['value', parseInt],
   '378' : ['value', parseInt],
   '379' : ['value', parseInt],
-
 
   // PlotStyleName type enum (AcDb::PlotStyleNameType).
   // Stored and moved around as a 16-bit integer.
@@ -166,11 +182,10 @@ var valueMap = {
 
 var count  = 0
 processors.HEADER = function(line) {
-  count++;
   if (pairWise) {
     switch (line) {
       case '9':
-        collect.push(header)
+        header && collect.push(header)
         header = {};
       break;
     }
