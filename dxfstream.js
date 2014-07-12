@@ -22,8 +22,9 @@ var hex = function(val) {
 
 var processors = {};
 
-var pairWise = true, collect = [], header = null, last = null;
-var valueMap = {
+var pairWise = true, collect = [], header = null, last = null, key = null;
+var headerValueMap = {
+  '0'  : ['separator', function() {}],
   '1'  : ['text'],
   '2'  : ['name'],
   '3'  : ['value'], // Other text or name values
@@ -32,7 +33,7 @@ var valueMap = {
   '6'  : ['lineType'],
   '7'  : ['textStyle'],
   '8'  : ['layerName'],
-  '9'  : ['variable'],
+  '9'  : ['variable', function(line) { key = line; }],
   '10' : ['x', parseFloat],
   '20' : ['y', parseFloat],
   '30' : ['z', parseFloat],
@@ -181,24 +182,36 @@ var valueMap = {
 }
 
 var count  = 0
+var headers = {};
 processors.HEADER = function(line) {
   if (pairWise) {
     switch (line) {
       case '9':
-        header && collect.push(header)
+        if (header) {
+          var keys = Object.keys(header);
+          if (keys.length > 1) {
+            headers[key] = header;
+          } else {
+            headers[key] = header[keys[0]];
+          }
+        }
         header = {};
       break;
     }
 
-    if (valueMap[line]) {
-      last = valueMap[line];
+    if (headerValueMap[line]) {
+      last = headerValueMap[line];
+    } else {
+      console.log('no value map for', line, last);
     }
   } else {
     if (!last) {
       console.log('miss', line, count);
-      process.exit();
     } else if (typeof last[1] === 'function') {
-      header[last[0]] = last[1](line);
+      var res = last[1](line);
+      if (typeof res !== 'undefined') {
+        header[last[0]] = res;
+      }
     } else {
       header[last[0]] = line;
     }
@@ -208,30 +221,82 @@ processors.HEADER = function(line) {
 };
 
 
+var classes = {}, currentClass = null, classKey = null;
+var classesValueMap = {
+  '0' : [null, function(line) {
+    if (currentClass) {
+      classes[classKey] = currentClass;
+    }
+    currentClass = {};
+  }],
+  '1' : ['name', function(line) {
+    classKey = line;
+  }],
+  '2' : ['className'],
+  '3' : ['applicationName'],
+  '90' : ['capabilities', parseInt],
+  '91' : ['count', parseInt],
+  '280' : ['wasProxy', bool],
+  '281' : ['isEntity', bool],
+}
+
+processors.CLASSES = function(line) {
+  if (pairWise) {
+    if (classesValueMap[line]) {
+      last = classesValueMap[line];
+    } else {
+      console.log('no value map for', line, last);
+    }
+
+  } else {
+    if (!last) {
+      console.log('miss', line, count);
+    } else if (typeof last[1] === 'function') {
+      var res = last[1](line);
+      if (typeof res !== 'undefined') {
+        currentClass[last[0]] = res;
+      }
+    } else {
+      currentClass[last[0]] = line;
+    }
+  }
+
+  pairWise = !pairWise;
+};
+
+// TODO: TABLES
+// TODO: BLOCKS
+// TODO: ENTITIES
+// TODO: OBJECTS
+
 
 fs.createReadStream(file)
   .pipe(split()).on('data', function(line) {
     line = line.trim();
-
     if (line.toLowerCase().indexOf('endsec') < 0) {
-      current.push(line);
-
-      if (current.length > 4) {
+      if (current.length > 3) {
 
         if (processors[current[3]]) {
          processors[current[3]](line);
         }
+      } else {
+        current.push(line);
       }
-
-
-
     } else {
-      found.push(current);
+      console.log('drop', current[3]);
+
+      // Ensure we dont acidentally drop the last item found
+      processors[current[3]] && processors[current[3]](null);
+
+
+      pairWise = true;
+      last = null;
       current = [];
     }
 
   }).on('end', function() {
-    console.log(collect);
+    console.log(classes);
+    // console.log(headers);
     //console.log(found, found.length, found.map(function(i) { return i[3] }));
   })
 
