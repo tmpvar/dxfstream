@@ -120,6 +120,17 @@ var headerValueMap = {
   '77' : ['value', parseInt],
   '78' : ['value', parseInt],
 
+  // 32-bit integer values
+  '90' : ['value', parseInt],
+  '91' : ['value', parseInt],
+  '92' : ['value', parseInt],
+  '93' : ['value', parseInt],
+  '94' : ['value', parseInt],
+  '95' : ['value', parseInt],
+  '96' : ['value', parseInt],
+  '97' : ['value', parseInt],
+  '98' : ['value', parseInt],
+
   '105' : ['dimvarEntry', parseInt],
   '110' : ['ucsOrigin', parseInt],
   '111' : ['ucsXAxis', parseInt],
@@ -473,9 +484,9 @@ entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
   '21' : ['majorEndpointY', parseFloat],
   '30' : ['centerZ', parseFloat],
   '31' : ['majorEndpointZ', parseFloat],
-  '40' : ['majorMinorRatio', parseFloat],
-  '41' : ['start', parseFloat], // 0.0 for full ellipse
-  '42' : ['end', parseFloat], // 2PI for full ellipse
+  '40' : ['majorMinorRatio', parseFloat], // Ratio of minor axis to major axis
+  '41' : ['start', parseFloat],           // 0.0 for full ellipse
+  '42' : ['end', parseFloat],             // 2PI for full ellipse
 });
 
 entityValueMaps.LINE = extend(commonEntityGroupCodes, {
@@ -487,7 +498,6 @@ entityValueMaps.LINE = extend(commonEntityGroupCodes, {
   '31' : ['z2', parseFloat]
 });
 
-var currentVertex;
 entityValueMaps.LWPOLYLINE = extend(commonEntityGroupCodes, {
   '10' : [null, function(line) {
     if (!currentEntity.vertices) {
@@ -498,7 +508,8 @@ entityValueMaps.LWPOLYLINE = extend(commonEntityGroupCodes, {
     currentEntity.vertices.push(currentVertex);
   }],
   '20' : [null, function(line) {
-    currentVertex.y = parseFloat(line);
+    var verts = currentEntity.vertices;
+    verts[verts.length-1].y = parseFloat(line);
   }],
   '38' : ['elevation', parseFloat],
   '40' : ['startingWidth', parseFloat],
@@ -543,8 +554,27 @@ entityValueMaps.POLYLINE = extend(commonEntityGroupCodes, {
 
 
 // TODO: we may need to change 10, 20, 30 here to include multiple points
+
+
 entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
-  '11' : ['fitPoints', parseFloat], // TODO: this probably needs to stash into an array
+  '10' : [null, function(line) {
+    if (!currentEntity.vertices) {
+      currentEntity.vertices = [];
+    }
+
+    currentEntity.vertices.push({
+      x : parseFloat(line)
+    })
+  }],
+
+  '20' : [null, function(line) {
+    var verts = currentEntity.vertices;
+    verts[verts.length-1].y = parseFloat(line)
+  }],
+
+
+  // TODO: implement me!
+  '11' : ['fitPoints', parseFloat],
   '12' : ['startTangentX', parseFloat],
   '13' : ['endTangentX', parseFloat],
 
@@ -555,8 +585,12 @@ entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '33' : ['endTangentZ', parseFloat],
 
   // TODO: populate the knots array
-  '40' : ['knots', function() {
+  '40' : ['knots', function(line) {
+    if (!currentEntity.knots) {
+      currentEntity.knots = [];
+    }
 
+    currentEntity.knots.push(parseFloat(line));
   }],
 
   '42' : ['weight', parseFloat],
@@ -571,6 +605,7 @@ entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '74' : ['totalFitPoints', parseInt], // TODO: prepare fit points array
 });
 
+entityValueMaps.POINT = extend(commonEntityGroupCodes, {});
 entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 
 processors.ENTITIES = function(line, push) {
