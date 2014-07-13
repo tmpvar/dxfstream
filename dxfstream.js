@@ -423,13 +423,175 @@ processors.BLOCKS = function(line) {
 };
 
 
+var entities = [], currentEntity, currentType;
+var noop = function() {};
+var commonEntityGroupCodes = extend(headerValueMap, {
+  '-1' : ['entityName'],
+  '0' : [null, function(line) {
+    if (currentEntity) {
+      entities.push(currentEntity);
+    }
+
+    currentEntity = { type : line };
+    currentType = line;
+  }],
+  '5' : ['handle', hex],
+  '6' : ['lineType'], // TODO: not sure what the type is here
+  '8' : ['layerName'],
+
+  '39' : ['thickness', parseFloat],
+
+  '330' : ['ownerSoft', hex],
+  '360' : ['ownerHard', hex],
+  '100' : [null, noop],
+
+  '210' : ['extrusionDirectionX', parseFloat],
+  '220' : ['extrusionDirectionY', parseFloat],
+  '230' : ['extrusionDirectionZ', parseFloat]
+});
+
+var entityValueMaps = {};
+
+entityValueMaps.ARC = extend(commonEntityGroupCodes, {
+  // TODO: figure out why there is a value: 0 in the result
+
+  '40' : ['radius', parseFloat],
+  '50' : ['startAngle', parseFloat],
+  '51' : ['endAngle', parseFloat],
+});
+
+
+entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
+  '10' : ['centerX', parseFloat],
+  '11' : ['majorEndpointX', parseFloat],
+  '20' : ['centerY', parseFloat],
+  '21' : ['majorEndpointY', parseFloat],
+  '30' : ['centerZ', parseFloat],
+  '31' : ['majorEndpointZ', parseFloat],
+  '40' : ['majorMinorRatio', parseFloat],
+  '41' : ['start', parseFloat], // 0.0 for full ellipse
+  '42' : ['end', parseFloat], // 2PI for full ellipse
+});
+
+entityValueMaps.LINE = extend(commonEntityGroupCodes, {
+  '10' : ['x1', parseFloat],
+  '11' : ['x2', parseFloat],
+  '20' : ['y1', parseFloat],
+  '21' : ['y2', parseFloat],
+  '30' : ['z1', parseFloat],
+  '31' : ['z2', parseFloat]
+});
+
+// TODO: need an example
+entityValueMaps.LWPOLYLINE = extend(commonEntityGroupCodes, {
+  '10' : ['x', parseFloat],
+  '20' : ['y', parseFloat],
+  '30' : ['z', parseFloat],
+  '38' : ['elevation', parseFloat],
+  '40' : ['startingWidth', parseFloat],
+  '41' : ['endWidth', parseFloat],
+  '42' : ['bulge', parseFloat],
+  '42' : ['constantWidth', parseInt],
+  '70' : ['polylineFlag', parseInt], // 1 = Closed; 128 = Plinegen
+  '90' : ['totalVertices', parseInt],
+});
+
+entityValueMaps.MLINE = extend(entityValueMaps.LINE, {
+  '2' : ['style'],
+  '12' : ['directionVectorX'],
+  '22' : ['directionVectorY'],
+  '32' : ['directionVectorZ'],
+
+  '13' : ['miterDirectionVectorX'],
+  '23' : ['miterDirectionVectorY'],
+  '33' : ['miterDirectionVectorZ'],
+
+  '40' : ['scale', parseFloat],
+
+  // TODO: this repeats based on 74
+  '41' : ['elementParameters', parseFloat],
+
+  // TODO: this repeats based on 75
+  '41' : ['areaFillParameters', parseFloat],
+
+  '70' : ['justification', parseInt], // 0 = Top; 1 = Zero; 2 = Bottom
+  '71' : ['flags', parseFloat],
+  '72' : ['totalVertices', parseInt],
+  '73' : ['totalStyleElements', parseInt], // Number of elements in MLINESTYLE definition
+  '73' : ['totalElementParameters', parseInt], // Number of elements in MLINESTYLE definition
+  '75' : ['totalAreaFillParameters', parseInt], // Number of elements in MLINESTYLE definition
+
+  '340' : ['styleReference', hex], // Pointer-handle/ID of MLINESTYLE object
+});
+
+// TODO: we may need to change 10, 20, 30 here to include multiple points
+entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
+  '11' : ['fitPoints', parseFloat], // TODO: this probably needs to stash into an array
+  '12' : ['startTangentX', parseFloat],
+  '13' : ['endTangentX', parseFloat],
+
+  '22' : ['startTangentY', parseFloat],
+  '23' : ['endTangentY', parseFloat],
+
+  '32' : ['startTangentZ', parseFloat],
+  '33' : ['endTangentZ', parseFloat],
+
+  // TODO: populate the knots array
+  '40' : ['knots', function() {
+
+  }],
+
+  '42' : ['weight', parseFloat],
+  '42' : ['knotTolerance', parseFloat],
+  '43' : ['controlPointTolerance', parseFloat],
+  '44' : ['fitTolerance', parseFloat],
+
+  '70' : ['flag', parseInt],
+  '71' : ['degree', parseFloat],
+  '72' : ['totalKnots', parseInt], // TODO: prepare knots array
+  '73' : ['totalControlPoints', parseInt], // TODO: prepare controlPoints array
+  '74' : ['totalFitPoints', parseInt], // TODO: prepare fit points array
+});
+
+processors.ENTITIES = function(line) {
+  var source = currentType ?
+               entityValueMaps[currentType] :
+               commonEntityGroupCodes;
+
+  if (pairWise) {
+    if (source[line]) {
+      last = source[line];
+    } else {
+      console.log('no value map for', line, last);
+      process.exit();
+    }
+
+  } else {
+    if (!last) {
+      console.log('miss', line, count);
+    } else if (typeof last[1] === 'function') {
+      var res = last[1](line);
+
+      if (typeof res !== 'undefined') {
+        currentEntity[last[0]] = res;
+      }
+
+    } else {
+      currentEntity[last[0]] = line;
+    }
+  }
+
+  pairWise = !pairWise;
+};
 
 // TODO: TABLES
-// TODO: ENTITIES
 // TODO: OBJECTS
+var duplex = require('duplexer');
+function createParserStream() {
+  var splitter = split();
 
-fs.createReadStream(file)
-  .pipe(split()).on('data', function(line) {
+
+  var output = through(function(line) {
     line = line.trim();
     if (line.toLowerCase().indexOf('endsec') < 0) {
       if (current.length > 3) {
@@ -450,38 +612,22 @@ fs.createReadStream(file)
       last = null;
       current = [];
     }
+  });
 
-  }).on('end', function() {
-    console.log(blocks);
-    // console.log(headers);
-    //console.log(found, found.length, found.map(function(i) { return i[3] }));
-  })
+  splitter.pipe(output)
 
-
-//   .pipe(through(function(line) {
-//     var trimmed = line.trim();
-//     if (trimmed[0] === '$') {
-//       mode = 1;
-//       key = trimmed.substr(1);
-//       current = out.settings;
-//       current[key] = [];
-//       return;
-//     } else if (!trimmed.match(/^\d/)) {
-//       mode = 0;
-//     }
-
-//     switch (mode) {
-//       case 1:
-//         current[key].push(parseFloat(trimmed));
-//       break;
-//       default:
-//         console.log('miss', line);
-//       break;
-//     }
-
-//   })).on('end', function() {
-//     console.log(  out);
-//   })
+  return duplex(splitter, output);
+}
 
 
-
+if (require.main === module) {
+  fs.createReadStream(file)
+    .pipe(createParserStream())
+    .on('end', function() {
+      console.log('ENTITIES', entities);
+    })
+    .pipe(process.stdout)
+;
+} else {
+  module.exports = createParserStream;
+}
