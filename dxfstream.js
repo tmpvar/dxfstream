@@ -487,11 +487,19 @@ entityValueMaps.LINE = extend(commonEntityGroupCodes, {
   '31' : ['z2', parseFloat]
 });
 
-// TODO: need an example
+var currentVertex;
 entityValueMaps.LWPOLYLINE = extend(commonEntityGroupCodes, {
-  '10' : ['x', parseFloat],
-  '20' : ['y', parseFloat],
-  '30' : ['z', parseFloat],
+  '10' : [null, function(line) {
+    if (!currentEntity.vertices) {
+      currentEntity.vertices = [];
+    }
+
+    currentVertex = { x: parseFloat(line) };
+    currentEntity.vertices.push(currentVertex);
+  }],
+  '20' : [null, function(line) {
+    currentVertex.y = parseFloat(line);
+  }],
   '38' : ['elevation', parseFloat],
   '40' : ['startingWidth', parseFloat],
   '41' : ['endWidth', parseFloat],
@@ -530,8 +538,9 @@ entityValueMaps.MLINE = extend(entityValueMaps.LINE, {
 });
 
 entityValueMaps.POLYLINE = extend(commonEntityGroupCodes, {
-
+  '66' : [null, noop],
 });
+
 
 // TODO: we may need to change 10, 20, 30 here to include multiple points
 entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
