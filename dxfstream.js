@@ -8,6 +8,8 @@ var through = require('through');
 var fsm = require('stream-fsm');
 var file = argv.file;
 
+var extend = require('xtend');
+
 var found = [];
 var current = [];
 var section = null;
@@ -38,6 +40,37 @@ var headerValueMap = {
   '20' : ['y', parseFloat],
   '30' : ['z', parseFloat],
 
+  // Double precision 3D point value
+
+  '11' : ['value', parseFloat],
+  '12' : ['value', parseFloat],
+  '13' : ['value', parseFloat],
+  '14' : ['value', parseFloat],
+  '15' : ['value', parseFloat],
+  '16' : ['value', parseFloat],
+  '17' : ['value', parseFloat],
+  '18' : ['value', parseFloat],
+  '19' : ['value', parseFloat],
+  '21' : ['value', parseFloat],
+  '22' : ['value', parseFloat],
+  '23' : ['value', parseFloat],
+  '24' : ['value', parseFloat],
+  '25' : ['value', parseFloat],
+  '26' : ['value', parseFloat],
+  '27' : ['value', parseFloat],
+  '28' : ['value', parseFloat],
+  '29' : ['value', parseFloat],
+  '30' : ['value', parseFloat],
+  '31' : ['value', parseFloat],
+  '32' : ['value', parseFloat],
+  '33' : ['value', parseFloat],
+  '34' : ['value', parseFloat],
+  '35' : ['value', parseFloat],
+  '36' : ['value', parseFloat],
+  '37' : ['value', parseFloat],
+  '38' : ['value', parseFloat],
+  '39' : ['value', parseFloat],
+
   // Double-precision floating-point values
   // (text height, scale factors, and so on)
   '40' : ['value', parseFloat],
@@ -61,8 +94,18 @@ var headerValueMap = {
   '57' : ['value', parseFloat],
   '58' : ['value', parseFloat],
 
-  // Color number (fixed)
+
+  // 16-bit integer value
+  '60' : ['visibility', parseInt],
+  '61' : ['value', parseInt],
   '62' : ['colorNumber', parseInt],
+  '63' : ['value', parseInt],
+  '64' : ['value', parseInt],
+  '65' : ['value', parseInt],
+  '66' : ['follow', parseInt],
+  '67' : ['space', parseInt],
+  '68' : ['viewportStatus', parseInt],
+  '69' : ['viewportId', parseInt],
 
   // Integer values (repeat counts, flag bits, or modes)
   '70' : ['value', parseInt],
@@ -74,6 +117,16 @@ var headerValueMap = {
   '76' : ['value', parseInt],
   '77' : ['value', parseInt],
   '78' : ['value', parseInt],
+
+  '105' : ['dimvarEntry', parseInt],
+  '110' : ['ucsOrigin', parseInt],
+  '111' : ['ucsXAxis', parseInt],
+  '112' : ['ucsXAxis', parseInt],
+
+  // DXF: Y value of UCS origin, UCS X-axis, and UCS Y-axis
+  '120' : ['value', parseInt],
+  '121' : ['value', parseInt],
+  '122' : ['value', parseInt],
 
   // Double-precision floating-point values (points, elevation, and DIMSTYLE settings, for example)
   '140' : ['value', parseFloat],
@@ -98,6 +151,39 @@ var headerValueMap = {
   '177' : ['value', parseInt],
   '178' : ['value', parseInt],
   '179' : ['value', parseInt],
+
+  // Double-precision floating-point value
+  '210' : ['value', parseFloat],
+  '211' : ['value', parseFloat],
+  '212' : ['value', parseFloat],
+  '213' : ['value', parseFloat],
+  '214' : ['value', parseFloat],
+  '215' : ['value', parseFloat],
+  '216' : ['value', parseFloat],
+  '217' : ['value', parseFloat],
+  '218' : ['value', parseFloat],
+  '219' : ['value', parseFloat],
+  '220' : ['value', parseFloat],
+  '221' : ['value', parseFloat],
+  '222' : ['value', parseFloat],
+  '223' : ['value', parseFloat],
+  '224' : ['value', parseFloat],
+  '225' : ['value', parseFloat],
+  '226' : ['value', parseFloat],
+  '227' : ['value', parseFloat],
+  '228' : ['value', parseFloat],
+  '229' : ['value', parseFloat],
+  '230' : ['value', parseFloat],
+  '231' : ['value', parseFloat],
+  '232' : ['value', parseFloat],
+  '233' : ['value', parseFloat],
+  '234' : ['value', parseFloat],
+  '235' : ['value', parseFloat],
+  '236' : ['value', parseFloat],
+  '237' : ['value', parseFloat],
+  '238' : ['value', parseFloat],
+  '239' : ['value', parseFloat],
+
 
   // 16-bit integer value
   '270' : ['value', parseInt],
@@ -179,6 +265,18 @@ var headerValueMap = {
   '387' : ['value', parseInt],
   '388' : ['value', parseInt],
   '389' : ['value', parseInt],
+
+  // 32-bit integer value
+  '440' : ['value', parseInt],
+  '441' : ['value', parseInt],
+  '442' : ['value', parseInt],
+  '443' : ['value', parseInt],
+  '444' : ['value', parseInt],
+  '445' : ['value', parseInt],
+  '446' : ['value', parseInt],
+  '447' : ['value', parseInt],
+  '448' : ['value', parseInt],
+  '449' : ['value', parseInt],
 }
 
 var count  = 0
@@ -264,11 +362,71 @@ processors.CLASSES = function(line) {
   pairWise = !pairWise;
 };
 
+
+var blocks = [], currentBlock = null;
+var blockValueMap = extend(headerValueMap, {
+  '0' : [null, function(line) {
+    if (!line || line === 'ENDBLK' || line === 'BLOCK') {
+      if (currentBlock) {
+        blocks.push(currentBlock);
+      }
+      currentBlock = {};
+    }
+  }],
+
+  '1' : ['xref'],
+  '2' : ['name'],
+  '3' : ['name'],
+  '4' : ['description'],
+  '5' : ['handle', hex],
+
+  '8' : ['layerName'],
+
+  '70' : ['type', function(line) {
+    return parseInt(line);
+  }],
+
+  // I believe this can be ignored as the other group
+  // codes will cover the name collection and such
+  //
+  // There is a potential disparity between the name and the AcDbBlockBegin name
+  '100' : ['subclass', function(line) { } ],
+  '330' : ['owner', hex],
+});
+
+
+processors.BLOCKS = function(line) {
+  if (pairWise) {
+    if (blockValueMap[line]) {
+      last = blockValueMap[line];
+    } else {
+      console.log('no value map for', line, last);
+      process.exit();
+    }
+
+  } else {
+    if (!last) {
+      console.log('miss', line, count);
+    } else if (typeof last[1] === 'function') {
+      var res = last[1](line);
+
+      if (typeof res !== 'undefined') {
+        currentBlock[last[0]] = res;
+      }
+
+    } else {
+      currentBlock[last[0]] = line;
+    }
+  }
+
+  pairWise = !pairWise;
+};
+
+
+
 // TODO: TABLES
-// TODO: BLOCKS
 // TODO: ENTITIES
 // TODO: OBJECTS
-
 
 fs.createReadStream(file)
   .pipe(split()).on('data', function(line) {
@@ -288,14 +446,13 @@ fs.createReadStream(file)
       // Ensure we dont acidentally drop the last item found
       processors[current[3]] && processors[current[3]](null);
 
-
       pairWise = true;
       last = null;
       current = [];
     }
 
   }).on('end', function() {
-    console.log(classes);
+    console.log(blocks);
     // console.log(headers);
     //console.log(found, found.length, found.map(function(i) { return i[3] }));
   })
