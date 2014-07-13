@@ -8,6 +8,8 @@ var through = require('through');
 var fsm = require('stream-fsm');
 var file = argv.file;
 
+var debug = !!argv.debug;
+
 var extend = require('xtend');
 
 var found = [];
@@ -427,8 +429,9 @@ var entities = [], currentEntity, currentType;
 var noop = function() {};
 var commonEntityGroupCodes = extend(headerValueMap, {
   '-1' : ['entityName'],
-  '0' : [null, function(line) {
+  '0' : [null, function(line, push) {
     if (currentEntity) {
+      push(currentEntity);
       entities.push(currentEntity);
     }
 
@@ -452,14 +455,16 @@ var commonEntityGroupCodes = extend(headerValueMap, {
 
 var entityValueMaps = {};
 
-entityValueMaps.ARC = extend(commonEntityGroupCodes, {
+entityValueMaps.CIRCLE = extend(commonEntityGroupCodes, {
+  '40' : ['radius', parseFloat],
+});
+
+entityValueMaps.ARC = extend(entityValueMaps.CIRCLE, {
   // TODO: figure out why there is a value: 0 in the result
 
-  '40' : ['radius', parseFloat],
   '50' : ['startAngle', parseFloat],
   '51' : ['endAngle', parseFloat],
 });
-
 
 entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
   '10' : ['centerX', parseFloat],
@@ -524,6 +529,10 @@ entityValueMaps.MLINE = extend(entityValueMaps.LINE, {
   '340' : ['styleReference', hex], // Pointer-handle/ID of MLINESTYLE object
 });
 
+entityValueMaps.POLYLINE = extend(commonEntityGroupCodes, {
+
+});
+
 // TODO: we may need to change 10, 20, 30 here to include multiple points
 entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '11' : ['fitPoints', parseFloat], // TODO: this probably needs to stash into an array
@@ -553,10 +562,12 @@ entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '74' : ['totalFitPoints', parseInt], // TODO: prepare fit points array
 });
 
-processors.ENTITIES = function(line) {
+processors.ENTITIES = function(line, push) {
   var source = currentType ?
                entityValueMaps[currentType] :
                commonEntityGroupCodes;
+
+  if (!source) { return; }
 
   if (pairWise) {
     if (source[line]) {
@@ -570,7 +581,7 @@ processors.ENTITIES = function(line) {
     if (!last) {
       console.log('miss', line, count);
     } else if (typeof last[1] === 'function') {
-      var res = last[1](line);
+      var res = last[1](line, push);
 
       if (typeof res !== 'undefined') {
         currentEntity[last[0]] = res;
@@ -587,9 +598,9 @@ processors.ENTITIES = function(line) {
 // TODO: TABLES
 // TODO: OBJECTS
 var duplex = require('duplexer');
-function createParserStream() {
+function createParserStream(options) {
+  options = options || {};
   var splitter = split();
-
 
   var output = through(function(line) {
     line = line.trim();
@@ -597,22 +608,30 @@ function createParserStream() {
       if (current.length > 3) {
 
         if (processors[current[3]]) {
-         processors[current[3]](line);
+         processors[current[3]](line, push);
         }
       } else {
         current.push(line);
       }
     } else {
-      console.log('drop', current[3]);
+      debug && console.log('drop', current[3]);
 
       // Ensure we dont acidentally drop the last item found
-      processors[current[3]] && processors[current[3]](null);
+      processors[current[3]] && processors[current[3]](null, push);
 
       pairWise = true;
       last = null;
       current = [];
     }
   });
+
+  function push(collected) {
+    if (options.json) {
+      output.push(JSON.stringify(collected) + '\n');
+    } else {
+      output.push(collected);
+    }
+  }
 
   splitter.pipe(output)
 
@@ -622,9 +641,11 @@ function createParserStream() {
 
 if (require.main === module) {
   fs.createReadStream(file)
-    .pipe(createParserStream())
+    .pipe(createParserStream({ json: true }))
     .on('end', function() {
-      console.log('ENTITIES', entities);
+      if (debug) {
+        console.log('ENTITIES', entities);
+      }
     })
     .pipe(process.stdout)
 ;
