@@ -18,22 +18,34 @@ window.addEventListener('keydown', function(ev) {
 
 var ctx = window.getContext('2d');
 
+// polyfill lifted from https://github.com/google/canvas-5-polyfill/blob/master/canvasv5.js
+// TODO: implement this in context2d w/ tests
+ctx.ellipse = function(x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
+  this.save();
+  this.translate(x, y);
+  this.scale(radiusX, radiusY);
+  this.rotate(rotation);
+
+  this.arc(0, 0, 1, startAngle, endAngle, antiClockwise);
+  this.restore();
+};
+
+
 ctx.fillStyle = '#112';
 ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 ctx.translate(window.innerWidth/2-200, window.innerHeight/2-200);
-
 // ctx.scale(50, 50)
+
 // ctx.scale(.5, .5)
-// ctx.lineWidth = .025;
-ctx.strokeStyle = "red";
-ctx.fillStyle = "red";
+// ctx.lineWidth = .05;
+// ctx.strokeStyle = "red";
+// ctx.fillStyle = "red";
 
 
 var rads = function(degs) {
   var res = degs * (Math.PI/180);
 
   if (res > Math.PI) {
-    console.log('here')
     res -= Math.PI*2
   }
   return res;
@@ -41,7 +53,6 @@ var rads = function(degs) {
 
 var min = Math.min;
 var max = Math.max;
-
 var renderers = {
   line : function(d) {
     ctx.beginPath();
@@ -76,8 +87,52 @@ var renderers = {
         ctx.stroke();
     ctx.restore();
   },
-  spline : function(d) {
+  ellipse : function(d) {
 
+    var x = d.centerX;
+    var y = d.centerY;
+    var ex = x + d.majorEndpointX;
+    var ey = y + d.majorEndpointY;
+
+    ctx.beginPath();
+    ctx.ellipse(
+      x,
+      y,
+      ex,
+      ey,
+      0,
+      d.start,
+      d.end,
+      false
+    );
+    ctx.strokeStyle = 'green';
+
+    ctx.stroke();
+  },
+
+  spline : function(d) {
+    ctx.strokeStyle = '#54FF10';
+
+    var points = d.vertices;
+    ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+
+      for (var i = 1; i < points.length - 2; i ++) {
+        var xc = (points[i].x + points[i + 1].x) / 2;
+        var yc = (points[i].y + points[i + 1].y) / 2;
+        ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+      }
+      // curve through the last two points
+      ctx.quadraticCurveTo(points[i].x, points[i].y, points[i+1].x,points[i+1].y);
+
+      ctx.strokeStyle = "#F0F";
+      ctx.stroke();
+  },
+  point: function(d) {
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, 1, 0, Math.PI*2, false);
+    ctx.fillStyle = "white";
+    ctx.fill();
   },
   polyline: function(d) {
     console.log('polyline', d)
@@ -99,9 +154,8 @@ var renderers = {
   }
 }
 
-fs.createReadStream(argv.file).pipe(dxfparser()).on('data', function(data) {
+fs.createReadStream(argv.file).pipe(dxfparser({ debug : 1 })).on('data', function(data) {
   if (data.type) {
-    console.log(data.type);
     var type = data.type.toLowerCase();
     if (renderers[type]) {
       renderers[type](data);
