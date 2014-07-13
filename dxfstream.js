@@ -447,7 +447,7 @@ var commonEntityGroupCodes = extend(headerValueMap, {
   '330' : ['ownerSoft', hex],
   '360' : ['ownerHard', hex],
   '100' : [null, noop],
-
+  '102' : ['group'],
   '210' : ['extrusionDirectionX', parseFloat],
   '220' : ['extrusionDirectionY', parseFloat],
   '230' : ['extrusionDirectionZ', parseFloat]
@@ -562,6 +562,8 @@ entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '74' : ['totalFitPoints', parseInt], // TODO: prepare fit points array
 });
 
+entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
+
 processors.ENTITIES = function(line, push) {
   var source = currentType ?
                entityValueMaps[currentType] :
@@ -573,8 +575,8 @@ processors.ENTITIES = function(line, push) {
     if (source[line]) {
       last = source[line];
     } else {
-      console.log('no value map for', line, last);
-      process.exit();
+      console.error(currentType, 'no value map for', line, last);
+      // process.exit();
     }
 
   } else {
