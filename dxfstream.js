@@ -1,5 +1,3 @@
-// TODO: turn this into a library
-
 var argv = require('optimist').argv
 var fs = require('fs');
 var path = require('path');
@@ -35,7 +33,7 @@ var valueMapRange = function(obj, start, end, name, fn, suffixNumber) {
     var key = name;
     if (suffixNumber) {
       if (i>start) {
-        key += (i-start);
+        key += (i-start) + 1;
       }
     }
 
@@ -324,7 +322,7 @@ entityValueMaps.ARC = extend(entityValueMaps.CIRCLE, {
   // TODO: figure out why there is a value: 0 in the result
 
   '50' : ['startAngle', parseFloat],
-  '51' : ['endAngle', parseFloat],
+  '51' : ['endAngle', parseFloat]
 });
 
 entityValueMaps.BODY = extend(commonEntityGroupCodes, {
@@ -338,13 +336,13 @@ entityValueMaps.BODY = extend(commonEntityGroupCodes, {
   // extra proprietary data (>255 bytes in group 1)
   '3' : [null, function(line) {
     currentEntity.proprietaryData.push(line);
-  }]
+  }],
 
-  '70' : ['version'],
+  '70' : ['version']
 });
 
 entityValueMaps.CIRCLE = extend(commonEntityGroupCodes, {
-  '40' : ['radius', parseFloat],
+  '40' : ['radius', parseFloat]
 });
 
 
@@ -357,17 +355,41 @@ entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
   '31' : ['majorEndpointZ', parseFloat],
   '40' : ['majorMinorRatio', parseFloat], // Ratio of minor axis to major axis
   '41' : ['start', parseFloat],           // 0.0 for full ellipse
-  '42' : ['end', parseFloat],             // 2PI for full ellipse
+  '42' : ['end', parseFloat]             // 2PI for full ellipse
 });
 
-entityValueMaps.LINE = extend(commonEntityGroupCodes, {
-  '10' : ['x1', parseFloat],
-  '11' : ['x2', parseFloat],
-  '20' : ['y1', parseFloat],
-  '21' : ['y2', parseFloat],
-  '30' : ['z1', parseFloat],
-  '31' : ['z2', parseFloat]
+entityValueMaps.LIGHT = extend(commonEntityGroupCodes, {
+
+  '11' : ['targetX', parseFloat],
+  '21' : ['targetY', parseFloat],
+  '31' : ['targetZ', parseFloat],
+  '41' : ['attenuationStartLimit', parseFloat],
+  '42' : ['attenuationEndLimit', parseFloat],
+  '50' : ['hotspotAngle', parseFloat],
+  '51' : ['falloffAngle', parseFloat],
+
+  // 1 = distant
+  // 2 = point
+  // 3 = spot
+  '70' : ['type', parseInt],
+
+  // 0 = none
+  // 1 = inverse linear
+  // 2 = inverse square
+  '72' : ['attenuationType', parseInt],
+
+  // 0 = ray traced
+  // 1 = shadow maps
+  '73' : ['shadowType', parseInt],
+
+  '91' : ['shadowMapSize', parseInt],
+  '280' : ['shadowMapSoftness', parseInt],
+  '290' : ['status', bool],
+  '291' : ['plotGlyph', bool],
+  '291' : ['castShadows', bool],
 });
+
+entityValueMaps.LINE = extend(commonEntityGroupCodes, {}); // use standard group codes
 
 entityValueMaps.LWPOLYLINE = extend(commonEntityGroupCodes, {
   '10' : [null, function(line) {
@@ -520,8 +542,8 @@ entityValueMaps.SUN = extend(commonEntityGroupCodes, {
 
   // 0 = ray traced
   // 1 = shadow maps
-  '70' : ['shadowType', parseInt]
-  '71' : ['shadowMapSize', parseInt]
+  '70' : ['shadowType', parseInt],
+  '71' : ['shadowMapSize', parseInt],
 
   '90' : ['version', parseInt],
   '91' : ['julianDay', parseInt],
