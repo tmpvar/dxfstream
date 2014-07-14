@@ -64,7 +64,25 @@ var headerValueMap = {
   '8'  : ['layerName'],
   '9'  : ['variable', function(line) { key = line; }],
 
+  // 10-18 seen in range below
+  // 20-28 seen in range below
+  // 30-37 seen in range below
+
+  '38' : ['elevation', parseFloat],
   '39' : ['thickness', parseFloat],
+
+  // 40-47 seen in range below
+
+  '48' : ['lineTypeScale', parseFloat],
+
+  // Repeated double-precision floating-point value. Multiple 49 groups may appear
+  // in one entity for variable-length tables (such as the dash lengths in the LTYPE table).
+  // A 7x group always appears before the first 49 group to specify the table length
+  '49' : ['UNKNOWN-49', function(line) {
+    throw new Error('cant handle 49; line: ' + line);
+  }],
+
+  // 50-58 seen in range below
 
   // 16-bit integer value
   '60' : ['visibility', parseInt],
@@ -73,21 +91,72 @@ var headerValueMap = {
   '63' : ['value', parseInt],
   '64' : ['value', parseInt],
   '65' : ['value', parseInt],
-  '66' : ['follow', parseInt],
+  '66' : ['entitiesFollow', parseInt],
+
+  // model or paper space
   '67' : ['space', parseInt],
+
+  // identifies whether viewport is on but fully off screen; is not active or is off
   '68' : ['viewportStatus', parseInt],
   '69' : ['viewportId', parseInt],
 
+  // 70-78 seen in range below
+  // 80 - 89 undefined
+  // 90-99 seen in range below
+
+  '100' : ['subclass'],
+  '102' : ['controlString'],
   '105' : ['dimvarEntry', parseInt],
-  '110' : ['ucsOrigin', parseInt],
-  '111' : ['ucsXAxis', parseInt],
-  '112' : ['ucsXAxis', parseInt],
 
   // Coordinate System (UCS) origin
   // appears this is used with the VIEWPORT Entity
-  '120' : ['x', parseFloat],
-  '121' : ['y', parseFloat],
-  '122' : ['z', parseFloat],
+  '110' : ['ucsX', parseInt],
+  '111' : ['ucsX', parseInt],
+  '112' : ['ucsX', parseInt],
+  '120' : ['ucsY', parseFloat],
+  '121' : ['ucsY', parseFloat],
+  '122' : ['ucsY', parseFloat],
+  '130' : ['ucsZ', parseFloat],
+  '131' : ['ucsZ', parseFloat],
+  '132' : ['ucsZ', parseFloat],
+
+  // 140-149 seen in range below
+
+  '210' : ['extrusionDirectionX', parseFloat],
+  '220' : ['extrusionDirectionY', parseFloat],
+  '230' : ['extrusionDirectionZ', parseFloat],
+
+  // 270-479 seen in ranges below
+
+  '999' : ['comment'],
+  '1000' : ['extendedData'],
+  '1001' : ['extendedDataApplicationName'],
+  '1002' : ['extendedDataControlString'],
+  '1003' : ['extendedDataLayerName'],
+  '1004' : ['extendedDataByteChunk'],
+  '1005' : ['extendedDataEntityHandle'],
+
+  '1010' : ['pointX', parseFloat],
+  '1011' : ['extendWorldPositionX', parseFloat],
+  '1012' : ['extendWorldDisplacementX', parseFloat],
+  '1013' : ['extendWorldDirectionX', parseFloat],
+
+  '1020' : ['pointY', parseFloat],
+  '1021' : ['extendWorldPositionY', parseFloat],
+  '1022' : ['extendWorldDisplacementX', parseFloat],
+  '1023' : ['extendWorldDirectionX', parseFloat],
+
+  '1030' : ['pointZ', parseFloat],
+  '1031' : ['extendWorldPositionZ', parseFloat],
+  '1032' : ['extendWorldDisplacementX', parseFloat],
+  '1033' : ['extendWorldDirectionX', parseFloat],
+
+  '1040' : ['value', parseFloat],
+  '1041' : ['distance', parseFloat],
+  '1042' : ['scale', parseFloat],
+
+  '1070' : ['extendedValue', parseInt],
+  '1071' : ['extendedValue', parseInt],
 
 };
 
@@ -108,7 +177,7 @@ valueMapRange(headerValueMap, 50, 58, 'value', parseFloat);
 valueMapRange(headerValueMap, 70, 78, 'value', parseInt);
 
 // 32-bit integer values
-valueMapRange(headerValueMap, 90, 98, 'value', parseInt);
+valueMapRange(headerValueMap, 90, 99, 'value', parseInt);
 
 // Double-precision floating-point values (points, elevation, and DIMSTYLE settings, for example)
 valueMapRange(headerValueMap, 140, 149, 'value', parseFloat);
@@ -116,23 +185,39 @@ valueMapRange(headerValueMap, 140, 149, 'value', parseFloat);
 // 16-bit integer values, such as flag bits representing DIMSTYLE settings
 valueMapRange(headerValueMap, 170, 179, 'value', parseInt);
 
-// Double-precision floating-point value
-valueMapRange(headerValueMap, 210, 239, 'value', parseFloat);
-
 // 16-bit integer value
 valueMapRange(headerValueMap, 270, 289, 'value', parseInt);
 
 // Boolean flag value
 valueMapRange(headerValueMap, 290, 299, 'value', bool);
 
+//Arbitrary text strings
+valueMapRange(headerValueMap, 300, 309, 'value', bool);
+
 // Arbitrary binary chunks with same representation and limits as
 // 1004 group codes: hexadecimal strings of up to 254 characters represent data chunks of up to 127 bytes
 // treat it like a string, if the user wants to decode, it's a new Buffer(..., 'hex') call away
-valueMapRange(headerValueMap, 290, 299, 'binary');
+valueMapRange(headerValueMap, 310, 319, 'binary');
+
+// Arbitrary object handles; handle values that are taken “as is”.
+// They are not translated during INSERT and XREF operations
+valueMapRange(headerValueMap, 310, 319, 'handle');
+
+// Soft-pointer handle; arbitrary soft pointers to other objects within same DXF file or drawing.
+// Translated during INSERT and XREF operations
+valueMapRange(headerValueMap, 330, 339, 'pointer', hex);
 
 // Hard-pointer handle; arbitrary hard pointers to other objects within same DXF
 // file or drawing. Translated during INSERT and XREF operations
 valueMapRange(headerValueMap, 340, 349, 'pointer', hex);
+
+// Soft-owner handle; arbitrary soft ownership links to other objects within same DXF
+// file or drawing. Translated during INSERT and XREF operations
+valueMapRange(headerValueMap, 350, 359, 'pointer', hex);
+
+// Hard-owner handle; arbitrary hard ownership links to other objects within same DXF
+// file or drawing. Translated during INSERT and XREF operations
+valueMapRange(headerValueMap, 360, 369, 'pointer', hex);
 
 // Lineweight enum value (AcDb::LineWeight).
 // Stored and moved around as a 16-bit integer.
@@ -150,9 +235,44 @@ valueMapRange(headerValueMap, 370, 379, 'lineWeight', parseInt);
 // same reason as the Lineweight range above
 valueMapRange(headerValueMap, 380, 389, 'plotStyle', parseInt);
 
-// 32-bit integer value
-valueMapRange(headerValueMap, 440, 449, 'value', parseInt);
+// String representing handle value of the PlotStyleName object,
+// basically a hard pointer, but has a different range to make backward
+// compatibility easier to deal with. Stored and moved around as an object ID
+// (a handle in DXF files) and a special type in AutoLISP. Custom non-entity
+// objects may use the full range, but entity classes only use 391-399 DXF
+// group codes in their represent-ation, for the same reason as the
+// lineweight range above
+valueMapRange(headerValueMap, 380, 389, 'plotStyleName');
 
+// 16-bit integers
+valueMapRange(headerValueMap, 400, 409, 'value', parseInt);
+
+// String
+valueMapRange(headerValueMap, 410, 419, 'string');
+
+// 32-bit integer value.
+// When used with True Color; a 32-bit integer representing a 24-bit color value.
+// The high-order byte (8 bits) is 0, the low-order byte an unsigned char holding the
+// Blue value (0-255), then the Green value, and the next-to-high order byte is the Red Value.
+// Convering this integer value to hexadecimal yields the following bit mask: 0x00RRGGBB.
+// For example, a true color with Red==200, Green==100 and Blue==50 is 0x00C86432, and in DXF,
+// in decimal, 13132850
+valueMapRange(headerValueMap, 420, 427, 'value', parseInt);
+
+// String; when used for True Color, a string representing the name of the color
+valueMapRange(headerValueMap, 430, 437, 'string');
+
+// 32-bit integer value
+valueMapRange(headerValueMap, 440, 447, 'value', parseInt);
+
+// Long
+valueMapRange(headerValueMap, 450, 459, 'value', parseInt);
+
+// Double-precision floating-point value
+valueMapRange(headerValueMap, 460, 469, 'value', parseFloat);
+
+// String
+valueMapRange(headerValueMap, 470, 479, 'string');
 
 var count  = 0
 var headers = {};
