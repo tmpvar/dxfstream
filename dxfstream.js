@@ -96,7 +96,6 @@ valueMapRange(headerValueMap, 10, 18, 'x', parseFloat, true);
 valueMapRange(headerValueMap, 20, 28, 'y', parseFloat, true);
 valueMapRange(headerValueMap, 30, 38, 'z', parseFloat, true);
 
-
 // Double-precision floating-point values
 // (text height, scale factors, and so on)
 valueMapRange(headerValueMap, 40, 47, 'value', parseFloat);
@@ -524,7 +523,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // MLEADER
 // MLEADERSTYLE
 // MTEXT
-// SECTION
 // SOLID
 // SURFACE
 // TABLE
@@ -557,6 +555,62 @@ entityValueMaps.RAY = extend(commonEntityGroupCodes, {
 });
 
 entityValueMaps.REGION = extend(entityValueMaps.BODY, {}); // Extends completely off of BODY
+
+entityValueMaps.SECTION = extend(commonEntityGroupCodes, {
+  '1' : ['name', parseInt],
+
+  '10' : ['verticalDirectionX', parseFloat],
+  '20' : ['verticalDirectionY', parseFloat],
+  '30' : ['verticalDirectionZ', parseFloat],
+
+  // collect vertices
+  '11' : [null, function(line) {
+    if (!currentEntity.vertices) {
+      currentEntity.vertices = [];
+    }
+
+    currentEntity.vertices.push({
+      x : parseFloat(line)
+    });
+  }],
+  '21' : [null, function(line) {
+    currentEntity.vertices[currentEntity.vertices.length-1].y = parseFloat(line);
+  }],
+  '31' : [null, function(line) {
+    currentEntity.vertices[currentEntity.vertices.length-1].z = parseFloat(line);
+  }],
+
+  // collect back line vertices
+  '12' : [null, function(line) {
+    if (!currentEntity.vertices) {
+      currentEntity.backVertices = [];
+    }
+
+    currentEntity.backVertices.push({
+      x : parseFloat(line)
+    });
+  }],
+  '22' : [null, function(line) {
+    currentEntity.backVertices[currentEntity.backVertices.length-1].y = parseFloat(line);
+  }],
+  '32' : [null, function(line) {
+    currentEntity.backVertices[currentEntity.backVertices.length-1].z = parseFloat(line);
+  }],
+
+  '40' : ['topHeight', parseFloat],
+  '41' : ['bottomHeight', parseFloat],
+  '63' : ['indicatorColor', parseInt],
+  '70' : ['indicatorTransparency', parseInt],
+  '90' : ['state', parseInt],
+  '91' : ['flags', parseInt],
+  '91' : ['totalVertices', parseInt],
+
+  // Hard-pointer ID/handle to geometry settings object
+  '360' : ['geometrySettingsHandle', hex],
+
+  // yeah this is a dupe of 63, not sure why
+  '411' : ['indicatorColor', parseInt],
+});
 
 entityValueMaps.SEQEND = extend(commonEntityGroupCodes, {}); // uses common codes
 
