@@ -22,6 +22,14 @@ var hex = function(val) {
   return parseInt(val, 16);
 };
 
+var pleaseHelp = function(line) {
+  throw new Error(
+    "Looks like there is some ambiguity here with " +
+    line +
+    '. send your dxf to tmpvar@gmail.com for help'
+  );
+}
+
 var noop = function() {};
 
 var processors = {};
@@ -88,7 +96,7 @@ var headerValueMap = {
   '60' : ['visibility', parseInt],
   '61' : ['value', parseInt],
   '62' : ['colorNumber', parseInt],
-  '63' : ['value', parseInt],
+  '63' : ['backgroundColor', parseInt],
   '64' : ['value', parseInt],
   '65' : ['value', parseInt],
   '66' : ['entitiesFollow', parseInt],
@@ -654,6 +662,74 @@ entityValueMaps.MLEADER = extend(entityValueMaps.LINE, {
   '342' : ['blockContentId', hex],
 });
 
+entityValueMaps.MTEXT = extend(entityValueMaps.LINE, {
+  '1' : ['text'],
+  '3' : [null, function(line) {
+    currentEntity.text += line;
+  }],
+  '7' : ['textStyleName'],
+
+  '11' : ['directionX', parseFloat],
+  '21' : ['directionX', parseFloat],
+  '31' : ['directionX', parseFloat],
+
+  '40' : ['textHeight', parseFloat],
+  '41' : ['referenceRectangleWidth', parseFloat],
+  '42' : ['referenceRectangleHeight', parseFloat],
+  '43' : ['height', parseFloat],
+
+  //Percentage of default (3-on-5) line spacing to be applied. Valid values range from 0.25 to 4.00
+  '44' : ['lineSpacingFactor', parseFloat],
+  '45' : ['fillBoxScale', parseFloat],
+
+  '48' : ['columnWidth', parseFloat],
+  '49' : ['columnGutter', parseFloat],
+
+  '50' : ['rotationOrColumnHeights', pleaseHelp], // radians
+
+  '63' : ['backgroundColor', parseInt],
+
+
+  // 1 = Top left
+  // 2 = Top center
+  // 3 = Top right
+  // 4 = Middle left
+  // 5 = Middle center
+  // 6 = Middle right
+  // 7 = Bottom left
+  // 8 = Bottom center
+  // 9 = Bottom right
+  '71' : ['attachmentPoint', parseInt],
+
+  // 1 = left to right
+  // 3 = top to bottom
+  // 5 = by style ()
+  '72' : ['drawingDirection', parseInt],
+
+  // 1 = at least
+  // 2 = exact
+  '73' : ['lineSpacing', parseInt],
+
+  '75' : ['columnType', parseInt],
+  '76' : ['columnCount', parseInt],
+  '78' : ['columnFlowReversed', parseInt],
+  '79' : ['columnAutoHeight', parseInt],
+
+  // 0 = Background fill off
+  // 1 = Use background fill color
+  // 2 = Use drawing window color as background fill color
+  '90' : ['backgroundFill', parseInt],
+
+  // not implemented in spec, but eff it.
+  '441' : ['backgroundTransparency', parseInt]
+
+});
+
+valueMapRange(entityValueMaps.MTEXT, 420, 429, 'backgroundColorRGB');
+valueMapRange(entityValueMaps.MTEXT, 430, 439, 'backgroundColorName');
+
+
+
 entityValueMaps.MLINE = extend(entityValueMaps.LINE, {
   '2' : ['style'],
   '12' : ['directionVectorX'],
@@ -682,9 +758,6 @@ entityValueMaps.MLINE = extend(entityValueMaps.LINE, {
   '340' : ['styleReference', hex], // Pointer-handle/ID of MLINESTYLE object
 });
 
-entityValueMaps.POLYLINE = extend(commonEntityGroupCodes, {
-  '66' : [null, noop],
-});
 
 entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '10' : [null, function(line) {
@@ -751,11 +824,11 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // INSERT
 // LEADER
 // LIGHT
-// MLINE
 // MLEADERSTYLE
-// MTEXT
+// MLINE
 // SOLID
 // SURFACE
+// POLYLINE
 // TABLE
 // TEXT
 // VIEWPORT
