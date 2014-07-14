@@ -53,14 +53,6 @@ var rads = function(degs) {
 var min = Math.min;
 var max = Math.max;
 var renderers = {
-  line : function(d) {
-    console.log(d);
-    ctx.beginPath();
-      ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x2, d.y2);
-      ctx.strokeStyle = d.layerName === 'VISIBLE' ? "green" : 'orange'
-      ctx.stroke();
-  },
   arc : function(d) {
 
     var a1 = rads(d.startAngle);
@@ -86,6 +78,35 @@ var renderers = {
         ctx.stroke();
     ctx.restore();
   },
+
+  dimension : function(d) {
+
+
+    var dx = d.x5 - d.x4;
+    var dy = d.y5 - d.y4;
+
+    ctx.beginPath();
+      ctx.moveTo(d.x5, d.y5);
+      ctx.lineTo(d.x, d.y)
+      // ctx.moveTo(d.x, d.y4+d.y);
+      ctx.lineTo(d.x - dx, d.y - dy);
+      ctx.lineTo(d.x4, d.y4);
+      ctx.strokeStyle = 'red';
+      ctx.stroke();
+      ctx.font = ".25px san-serif"
+
+      var text = d.actualMeasurement.toFixed(3);
+      var size = ctx.measureText(text);
+
+      ctx.fillStyle = "red";
+
+      ctx.fillText(
+        text,
+        d.textCenterX - size.width / 2,
+        d.textCenterY
+      );
+  },
+
   ellipse : function(d) {
 
     var x = d.centerX;
@@ -106,6 +127,30 @@ var renderers = {
     );
     ctx.strokeStyle = 'green';
 
+    ctx.stroke();
+  },
+
+  line : function(d) {
+    ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x2, d.y2);
+      ctx.strokeStyle = d.layerName === 'VISIBLE' ? "green" : 'orange'
+      ctx.stroke();
+  },
+
+  lwpolyline: function(d) {
+    ctx.beginPath();
+      var verts = d.vertices;
+      var l = verts.length;
+
+      ctx.moveTo(verts[0].x, verts[0].y)
+
+      for (var i = 0; i<l; i++) {
+        ctx.lineTo(verts[i].x, verts[i].y);
+      }
+
+      ctx.strokeStyle = "pink";
+    ctx.closePath();
     ctx.stroke();
   },
 
@@ -132,33 +177,22 @@ var renderers = {
       ctx.strokeStyle = "#F0F";
       ctx.stroke();
   },
+
   point: function(d) {
     ctx.beginPath();
     ctx.arc(d.x, d.y, 1, 0, Math.PI*2, false);
     ctx.fillStyle = "white";
     ctx.fill();
   },
+
   polyline: function(d) {
     console.log('polyline', d)
   },
-  lwpolyline: function(d) {
-    ctx.beginPath();
-      var verts = d.vertices;
-      var l = verts.length;
 
-      ctx.moveTo(verts[0].x, verts[0].y)
-
-      for (var i = 0; i<l; i++) {
-        ctx.lineTo(verts[i].x, verts[i].y);
-      }
-
-      ctx.strokeStyle = "pink";
-    ctx.closePath();
-    ctx.stroke();
-  }
 }
 
 fs.createReadStream(argv.file).pipe(dxfparser({ debug : 1 })).on('data', function(data) {
+console.log(data);
   if (data.type) {
     var type = data.type.toLowerCase();
     if (renderers[type]) {
