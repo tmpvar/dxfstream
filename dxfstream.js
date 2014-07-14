@@ -590,7 +590,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // SURFACE
 // TABLE
 // TEXT
-// VERTEX
 // VIEWPORT
 
 entityValueMaps.OLEFRAME = extend(commonEntityGroupCodes, {
@@ -745,6 +744,40 @@ entityValueMaps.UNDERLAY = extend(commonEntityGroupCodes, {
 
   '281' : ['contrast', parseInt], // value between 20 and 100
   '281' : ['fade', parseInt]     // value between 0 and 80
+});
+
+entityValueMaps.VERTEX = extend(commonEntityGroupCodes, {
+  '40' : ['startingWidth', parseFloat],
+  '41' : ['endingWidth', parseFloat],
+  '42' : ['bulge', parseFloat],
+  '50' : ['tangentDirection', parseFloat],
+
+  // 1 = Extra vertex created by curve-fitting
+  // 2 = Curve-fit tangent defined for this vertex.
+  //     A curve-fit tangent direction of 0 may be omitted from DXF output
+  //     but is significant if this bit is set
+  // 4 = Not used
+  // 8 = Spline vertex created by spline-fitting
+  // 16 = Spline frame control point
+  // 32 = 3D polyline vertex
+  // 64 = 3D polygon mesh
+  // 128 = Polyface mesh vertex
+  '70' : ['flags', parseInt],
+
+  // TODO: this may be a bug, but I would need a dxf
+  //       that expresses this to fix
+  '71' : ['polyfaceMeshVertexIndex', parseInt],
+  '72' : ['polyfaceMeshVertexIndex', parseInt],
+  '73' : ['polyfaceMeshVertexIndex', parseInt],
+  '74' : ['polyfaceMeshVertexIndex', parseInt],
+
+  '100' : ['subclass', function(line) {
+    // wait for a line longer than AcDbVertex
+
+    if ('AcDbVertex'.length !== line.length) {
+      return line;
+    }
+  }]
 });
 
 entityValueMaps.WIPEOUT = extend(commonEntityGroupCodes, {
