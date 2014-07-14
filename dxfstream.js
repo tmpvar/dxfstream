@@ -416,8 +416,6 @@ entityValueMaps.DIMENSION = extend(commonEntityGroupCodes, {
   // 1 = at least (taller characters will override)
   // 2 = exact (taller characters will not override)
   '72' : ['lineSpacing', parseInt],
-
-
 });
 
 entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
@@ -594,7 +592,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // TEXT
 // VERTEX
 // VIEWPORT
-// WIPEOUT
 
 entityValueMaps.OLEFRAME = extend(commonEntityGroupCodes, {
   '70' : ['version', parseInt],
@@ -748,6 +745,74 @@ entityValueMaps.UNDERLAY = extend(commonEntityGroupCodes, {
 
   '281' : ['contrast', parseInt], // value between 20 and 100
   '281' : ['fade', parseInt]     // value between 0 and 80
+});
+
+entityValueMaps.WIPEOUT = extend(commonEntityGroupCodes, {
+  //  U-vector of a single pixel (points along the visual
+  //  bottom of the image, starting at the insertion point) (in WCS)
+  '11' : ['uVectorX', parseFloat],
+  '21' : ['uVectorY', parseFloat],
+  '31' : ['uVectorZ', parseFloat],
+
+  //  V-vector of a single pixel
+  // (points along the visual left side of the image, starting at
+  // the insertion point) (in WCS)
+  '12' : ['vVectorX', parseFloat],
+  '22' : ['vVectorY', parseFloat],
+  '32' : ['vVectorZ', parseFloat],
+
+  '13' : ['imageSizeU', parseFloat],
+  '23' : ['imageSizeV', parseFloat],
+
+  // Clip boundary vertex (in OCS)
+  //
+  // 1) For rectangular clip boundary type, two opposite corners
+  //    must be specified. Default is (-0.5,-0.5), (size.x-0.5, size.y-0.5).
+  //
+  // 2) For polygonal clip boundary type, three or more vertices must be specified.
+  //    Polygonal vertices must be listed sequentially
+  '14' : [null, function(line) {
+    if (!currentEntity.clipBounds) {
+      currentEntity.clipBounds = [];
+    }
+
+    currentEntity.clipBounds.push({
+      x: parseFloat(line)
+    });
+  }],
+  '24' : [null, function(line) {
+    var l = currentEntity.clipBounds.length
+    currentEntity.clipBounds[l-1].y = parseFloat(line);
+  }],
+  '34' : [null, function(line) {
+    var l = currentEntity.clipBounds.length
+    currentEntity.clipBounds[l-1].z = parseFloat(line);
+  }],
+
+  // Image display properties:
+  // 1 = Show image
+  // 2 = Show image when not aligned with screen 4 = Use clipping boundary
+  // 8 = Transparency is on
+  '70' : ['display', parseInt],
+  // Clipping Boundary Type
+  // 1 = rectangular
+  // 2 = polygonal
+  '71' : ['clippingBoundaryType', parseInt],
+
+  '90' : ['classVersion', parseInt],
+  '91' : ['totalClipVertices', parseInt],
+
+  // 0 = off
+  // 1 = on
+  '280' : ['clippingState', parseInt],
+
+  // 0-100 (%)
+  '281' : ['brightness', parseInt],
+  '282' : ['contrast', parseInt],
+  '283' : ['fade', parseInt],
+
+  '340' : ['imagedef', hex],
+  '360' : ['imagedefReactor', hex],
 });
 
 entityValueMaps.XLINE = extend(commonEntityGroupCodes, {
