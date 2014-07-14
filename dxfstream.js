@@ -489,7 +489,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // SEQEND
 // SHAPE
 // SOLID
-// SUN
 // SURFACE
 // TABLE
 // TEXT
@@ -498,6 +497,25 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // VIEWPORT
 // WIPEOUT
 
+
+entityValueMaps.SUN = extend(commonEntityGroupCodes, {
+  '40' : ['intensity', parseFloat],
+
+  // 0 = ray traced
+  // 1 = shadow maps
+  '70' : ['shadowType', parseInt]
+  '71' : ['shadowMapSize', parseInt]
+
+  '90' : ['version', parseInt],
+  '91' : ['julianDay', parseInt],
+  '92' : ['time', parseInt], // in seconds past midnight
+
+  '280' : ['shadowSoftness', parseInt],
+
+  '290' : ['status', bool],
+  '291' : ['shadows', bool],
+  '292' : ['daylightSavings', bool]
+});
 
 entityValueMaps.TOLERANCE = extend(commonEntityGroupCodes, {
   '1' : 'name',
@@ -542,7 +560,7 @@ entityValueMaps.UNDERLAY = extend(commonEntityGroupCodes, {
   '280' : ['flags', parseInt],
 
   '281' : ['contrast', parseInt], // value between 20 and 100
-  '281' : ['fade', parseInt],     // value between 0 and 80
+  '281' : ['fade', parseInt]     // value between 0 and 80
 });
 
 entityValueMaps.XLINE = extend(commonEntityGroupCodes, {
