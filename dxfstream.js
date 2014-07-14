@@ -146,8 +146,6 @@ valueMapRange(headerValueMap, 380, 389, 'plotStyle', parseInt);
 // 32-bit integer value
 valueMapRange(headerValueMap, 440, 449, 'value', parseInt);
 
-console.log(headerValueMap);
-
 
 var count  = 0
 var headers = {};
@@ -464,6 +462,85 @@ entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
 entityValueMaps.POINT = extend(commonEntityGroupCodes, {});
 entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 
+
+// TODO: implement the remainder
+// 3DFACE
+// 3DSOLID
+// ACAD_PROXY_ENTITY
+// ATTDEF
+// ATTRIB
+// BODY
+// DIMENSION
+// HATCH
+// HELIX
+// IMAGE
+// INSERT
+// LEADER
+// LIGHT
+// MLINE
+// MLEADER
+// MLEADERSTYLE
+// MTEXT
+// OLEFRAME
+// OLE2FRAME
+// RAY
+// REGION
+// SECTION
+// SEQEND
+// SHAPE
+// SOLID
+// SUN
+// SURFACE
+// TABLE
+// TEXT
+// TOLERANCE
+// TRACE
+// UNDERLAY
+// VERTEX
+// VIEWPORT
+// WIPEOUT
+
+entityValueMaps.UNDERLAY = extend(commonEntityGroupCodes, {
+  '10' : [null, function(line) {
+    if (!currentEntity.points) {
+      currentEntity.points = [];
+    }
+    currentEntity.points.push({ x : parseFloat(line) });
+  }],
+
+  '20' : [null, function(line) {
+    currentEntity.points[currentEntity.points.length-1].y = parseFloat(line);
+  }],
+
+  '30' : [null, function(line) {
+    currentEntity.points[currentEntity.points.length-1].z = parseFloat(line);
+  }],
+
+  '41' : ['scaleX', parseFloat],
+  '42' : ['scaleY', parseFloat],
+  '43' : ['scaleZ', parseFloat],
+  '50' : ['rotationAngle', parseFloat],
+
+  '210' : ['normalX', parseFloat],
+  '220' : ['normalY', parseFloat],
+  '230' : ['normalZ', parseFloat],
+
+  //   1 = Clipping is on
+  //   2 = Underlay is on
+  //   4 = Monochrome
+  //   8 = Adjust for background
+  '280' : ['flags', parseInt],
+
+  '281' : ['contrast', parseInt], // value between 20 and 100
+  '281' : ['fade', parseInt],     // value between 0 and 80
+});
+
+entityValueMaps.XLINE = extend(commonEntityGroupCodes, {
+  '11' : ['directionX', parseFloat],
+  '21' : ['directionY', parseFloat],
+  '31' : ['directionZ', parseFloat]
+});
+
 processors.ENTITIES = function(line, push) {
   var source = currentType ?
                entityValueMaps[currentType] :
@@ -497,8 +574,7 @@ processors.ENTITIES = function(line, push) {
   pairWise = !pairWise;
 };
 
-// TODO: TABLES
-// TODO: OBJECTS
+
 var duplex = require('duplexer');
 function createParserStream(options) {
   options = options || {};
@@ -549,8 +625,8 @@ if (require.main === module) {
         console.log('ENTITIES', entities);
       }
     })
-    .pipe(process.stdout)
-;
+    .pipe(process.stdout);
+
 } else {
   module.exports = createParserStream;
 }
