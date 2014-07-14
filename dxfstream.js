@@ -24,11 +24,33 @@ var hex = function(val) {
   return parseInt(val, 16);
 };
 
+var noop = function() {};
+
 var processors = {};
 
 var pairWise = true, collect = [], header = null, last = null, key = null;
+
+var valueMapRange = function(obj, start, end, name, fn, suffixNumber) {
+  for (var i = start; i<=end; i++) {
+    var key = name;
+    if (suffixNumber) {
+      if (i>start) {
+        key += (i-start);
+      }
+    }
+
+    obj[i + ''] = [key, fn];
+  }
+};
+
 var headerValueMap = {
-  '0'  : ['separator', function() {}],
+  '-5'  : ['reactorChain'],
+  '-4'  : ['conditionalOperator'],
+  '-3'  : ['extendedData'],
+  '-2'  : ['entityNameReference'],
+  '-1'  : ['entityName'],
+
+  '0'  : ['separator', noop],
   '1'  : ['text'],
   '2'  : ['name'],
   '3'  : ['value'], // Other text or name values
@@ -38,64 +60,8 @@ var headerValueMap = {
   '7'  : ['textStyle'],
   '8'  : ['layerName'],
   '9'  : ['variable', function(line) { key = line; }],
-  '10' : ['x', parseFloat],
-  '20' : ['y', parseFloat],
-  '30' : ['z', parseFloat],
 
-  // Double precision 3D point value
-
-  '11' : ['value', parseFloat],
-  '12' : ['value', parseFloat],
-  '13' : ['value', parseFloat],
-  '14' : ['value', parseFloat],
-  '15' : ['value', parseFloat],
-  '16' : ['value', parseFloat],
-  '17' : ['value', parseFloat],
-  '18' : ['value', parseFloat],
-  '19' : ['value', parseFloat],
-  '21' : ['value', parseFloat],
-  '22' : ['value', parseFloat],
-  '23' : ['value', parseFloat],
-  '24' : ['value', parseFloat],
-  '25' : ['value', parseFloat],
-  '26' : ['value', parseFloat],
-  '27' : ['value', parseFloat],
-  '28' : ['value', parseFloat],
-  '29' : ['value', parseFloat],
-  '30' : ['value', parseFloat],
-  '31' : ['value', parseFloat],
-  '32' : ['value', parseFloat],
-  '33' : ['value', parseFloat],
-  '34' : ['value', parseFloat],
-  '35' : ['value', parseFloat],
-  '36' : ['value', parseFloat],
-  '37' : ['value', parseFloat],
-  '38' : ['value', parseFloat],
-  '39' : ['value', parseFloat],
-
-  // Double-precision floating-point values
-  // (text height, scale factors, and so on)
-  '40' : ['value', parseFloat],
-  '41' : ['value', parseFloat],
-  '42' : ['value', parseFloat],
-  '43' : ['value', parseFloat],
-  '44' : ['value', parseFloat],
-  '45' : ['value', parseFloat],
-  '46' : ['value', parseFloat],
-  '47' : ['value', parseFloat],
-
-  // Angles (output in degrees to DXF files and
-  //  radians through AutoLISP and ObjectARX applications)
-  '50' : ['value', parseFloat],
-  '51' : ['value', parseFloat],
-  '52' : ['value', parseFloat],
-  '53' : ['value', parseFloat],
-  '54' : ['value', parseFloat],
-  '55' : ['value', parseFloat],
-  '56' : ['value', parseFloat],
-  '57' : ['value', parseFloat],
-  '58' : ['value', parseFloat],
-
+  '39' : ['thickness', parseFloat],
 
   // 16-bit integer value
   '60' : ['visibility', parseInt],
@@ -109,188 +75,79 @@ var headerValueMap = {
   '68' : ['viewportStatus', parseInt],
   '69' : ['viewportId', parseInt],
 
-  // Integer values (repeat counts, flag bits, or modes)
-  '70' : ['value', parseInt],
-  '71' : ['value', parseInt],
-  '72' : ['value', parseInt],
-  '73' : ['value', parseInt],
-  '74' : ['value', parseInt],
-  '75' : ['value', parseInt],
-  '76' : ['value', parseInt],
-  '77' : ['value', parseInt],
-  '78' : ['value', parseInt],
-
-  // 32-bit integer values
-  '90' : ['value', parseInt],
-  '91' : ['value', parseInt],
-  '92' : ['value', parseInt],
-  '93' : ['value', parseInt],
-  '94' : ['value', parseInt],
-  '95' : ['value', parseInt],
-  '96' : ['value', parseInt],
-  '97' : ['value', parseInt],
-  '98' : ['value', parseInt],
-
   '105' : ['dimvarEntry', parseInt],
   '110' : ['ucsOrigin', parseInt],
   '111' : ['ucsXAxis', parseInt],
   '112' : ['ucsXAxis', parseInt],
 
-  // DXF: Y value of UCS origin, UCS X-axis, and UCS Y-axis
-  '120' : ['value', parseInt],
-  '121' : ['value', parseInt],
-  '122' : ['value', parseInt],
+  // Coordinate System (UCS) origin
+  // appears this is used with the VIEWPORT Entity
+  '120' : ['x', parseFloat],
+  '121' : ['y', parseFloat],
+  '122' : ['z', parseFloat],
 
-  // Double-precision floating-point values (points, elevation, and DIMSTYLE settings, for example)
-  '140' : ['value', parseFloat],
-  '141' : ['value', parseFloat],
-  '142' : ['value', parseFloat],
-  '143' : ['value', parseFloat],
-  '144' : ['value', parseFloat],
-  '145' : ['value', parseFloat],
-  '146' : ['value', parseFloat],
-  '147' : ['value', parseFloat],
-  '148' : ['value', parseFloat],
-  '149' : ['value', parseFloat],
+};
 
-  // 16-bit integer values, such as flag bits representing DIMSTYLE settings
-  '170' : ['value', parseInt],
-  '171' : ['value', parseInt],
-  '172' : ['value', parseInt],
-  '173' : ['value', parseInt],
-  '174' : ['value', parseInt],
-  '175' : ['value', parseInt],
-  '176' : ['value', parseInt],
-  '177' : ['value', parseInt],
-  '178' : ['value', parseInt],
-  '179' : ['value', parseInt],
-
-  // Double-precision floating-point value
-  '210' : ['value', parseFloat],
-  '211' : ['value', parseFloat],
-  '212' : ['value', parseFloat],
-  '213' : ['value', parseFloat],
-  '214' : ['value', parseFloat],
-  '215' : ['value', parseFloat],
-  '216' : ['value', parseFloat],
-  '217' : ['value', parseFloat],
-  '218' : ['value', parseFloat],
-  '219' : ['value', parseFloat],
-  '220' : ['value', parseFloat],
-  '221' : ['value', parseFloat],
-  '222' : ['value', parseFloat],
-  '223' : ['value', parseFloat],
-  '224' : ['value', parseFloat],
-  '225' : ['value', parseFloat],
-  '226' : ['value', parseFloat],
-  '227' : ['value', parseFloat],
-  '228' : ['value', parseFloat],
-  '229' : ['value', parseFloat],
-  '230' : ['value', parseFloat],
-  '231' : ['value', parseFloat],
-  '232' : ['value', parseFloat],
-  '233' : ['value', parseFloat],
-  '234' : ['value', parseFloat],
-  '235' : ['value', parseFloat],
-  '236' : ['value', parseFloat],
-  '237' : ['value', parseFloat],
-  '238' : ['value', parseFloat],
-  '239' : ['value', parseFloat],
+// Double precision 3D point value
+valueMapRange(headerValueMap, 10, 18, 'x', parseFloat, true);
+valueMapRange(headerValueMap, 20, 28, 'y', parseFloat, true);
+valueMapRange(headerValueMap, 30, 38, 'z', parseFloat, true);
 
 
-  // 16-bit integer value
-  '270' : ['value', parseInt],
-  '271' : ['value', parseInt],
-  '272' : ['value', parseInt],
-  '273' : ['value', parseInt],
-  '274' : ['value', parseInt],
-  '275' : ['value', parseInt],
-  '276' : ['value', parseInt],
-  '277' : ['value', parseInt],
-  '278' : ['value', parseInt],
-  '279' : ['value', parseInt],
-  '280' : ['value', parseInt],
-  '281' : ['value', parseInt],
-  '282' : ['value', parseInt],
-  '283' : ['value', parseInt],
-  '284' : ['value', parseInt],
-  '285' : ['value', parseInt],
-  '286' : ['value', parseInt],
-  '287' : ['value', parseInt],
-  '288' : ['value', parseInt],
-  '289' : ['value', parseInt],
+// Double-precision floating-point values
+// (text height, scale factors, and so on)
+valueMapRange(headerValueMap, 40, 47, 'value', parseFloat);
 
-  // Boolean flag value
-  '290' : ['value', bool],
-  '291' : ['value', bool],
-  '292' : ['value', bool],
-  '293' : ['value', bool],
-  '294' : ['value', bool],
-  '295' : ['value', bool],
-  '296' : ['value', bool],
-  '297' : ['value', bool],
-  '298' : ['value', bool],
-  '299' : ['value', bool],
+// Angles (output in degrees to DXF files and
+//  radians through AutoLISP and ObjectARX applications)
+valueMapRange(headerValueMap, 50, 58, 'value', parseFloat);
 
-  // Hard-pointer handle; arbitrary hard pointers to other objects within same DXF
-  // file or drawing. Translated during INSERT and XREF operations
-  '340' : ['pointer', hex],
-  '341' : ['pointer', hex],
-  '342' : ['pointer', hex],
-  '343' : ['pointer', hex],
-  '344' : ['pointer', hex],
-  '345' : ['pointer', hex],
-  '346' : ['pointer', hex],
-  '347' : ['pointer', hex],
-  '348' : ['pointer', hex],
-  '349' : ['pointer', hex],
+// Integer values (repeat counts, flag bits, or modes)
+valueMapRange(headerValueMap, 70, 78, 'value', parseInt);
 
-  // Lineweight enum value (AcDb::LineWeight).
-  // Stored and moved around as a 16-bit integer.
-  // Custom non-entity objects may use the full range,
-  // but entity classes only use 371-379 DXF group codes in
-  // their representation, because AutoCAD and AutoLISP both
-  // always assume a 370 group code is the entity's lineweight.
-  // This allows 370 to behave like other “common” entity fields
-  '370' : ['value', parseInt],
-  '371' : ['value', parseInt],
-  '372' : ['value', parseInt],
-  '373' : ['value', parseInt],
-  '374' : ['value', parseInt],
-  '375' : ['value', parseInt],
-  '376' : ['value', parseInt],
-  '377' : ['value', parseInt],
-  '378' : ['value', parseInt],
-  '379' : ['value', parseInt],
+// 32-bit integer values
+valueMapRange(headerValueMap, 90, 98, 'value', parseInt);
 
-  // PlotStyleName type enum (AcDb::PlotStyleNameType).
-  // Stored and moved around as a 16-bit integer.
-  // Custom non-entity objects may use the full range, but entity classes
-  // only use 381-389 DXF group codes in their representation, for the
-  // same reason as the Lineweight range above
-  '380' : ['value', parseInt],
-  '381' : ['value', parseInt],
-  '382' : ['value', parseInt],
-  '383' : ['value', parseInt],
-  '384' : ['value', parseInt],
-  '385' : ['value', parseInt],
-  '386' : ['value', parseInt],
-  '387' : ['value', parseInt],
-  '388' : ['value', parseInt],
-  '389' : ['value', parseInt],
+// Double-precision floating-point values (points, elevation, and DIMSTYLE settings, for example)
+valueMapRange(headerValueMap, 140, 149, 'value', parseFloat);
 
-  // 32-bit integer value
-  '440' : ['value', parseInt],
-  '441' : ['value', parseInt],
-  '442' : ['value', parseInt],
-  '443' : ['value', parseInt],
-  '444' : ['value', parseInt],
-  '445' : ['value', parseInt],
-  '446' : ['value', parseInt],
-  '447' : ['value', parseInt],
-  '448' : ['value', parseInt],
-  '449' : ['value', parseInt],
-}
+// 16-bit integer values, such as flag bits representing DIMSTYLE settings
+valueMapRange(headerValueMap, 170, 179, 'value', parseInt);
+
+// Double-precision floating-point value
+valueMapRange(headerValueMap, 210, 239, 'value', parseFloat);
+
+// 16-bit integer value
+valueMapRange(headerValueMap, 270, 289, 'value', parseInt);
+
+// Boolean flag value
+valueMapRange(headerValueMap, 290, 299, 'value', bool);
+
+// Hard-pointer handle; arbitrary hard pointers to other objects within same DXF
+// file or drawing. Translated during INSERT and XREF operations
+valueMapRange(headerValueMap, 340, 349, 'pointer', hex);
+
+// Lineweight enum value (AcDb::LineWeight).
+// Stored and moved around as a 16-bit integer.
+// Custom non-entity objects may use the full range,
+// but entity classes only use 371-379 DXF group codes in
+// their representation, because AutoCAD and AutoLISP both
+// always assume a 370 group code is the entity's lineweight.
+// This allows 370 to behave like other “common” entity fields
+valueMapRange(headerValueMap, 370, 379, 'lineWeight', parseInt);
+
+// PlotStyleName type enum (AcDb::PlotStyleNameType).
+// Stored and moved around as a 16-bit integer.
+// Custom non-entity objects may use the full range, but entity classes
+// only use 381-389 DXF group codes in their representation, for the
+// same reason as the Lineweight range above
+valueMapRange(headerValueMap, 380, 389, 'plotStyle', parseInt);
+
+// 32-bit integer value
+valueMapRange(headerValueMap, 440, 449, 'value', parseInt);
+
+console.log(headerValueMap);
+
 
 var count  = 0
 var headers = {};
@@ -437,7 +294,6 @@ processors.BLOCKS = function(line) {
 
 
 var entities = [], currentEntity, currentType;
-var noop = function() {};
 var commonEntityGroupCodes = extend(headerValueMap, {
   '-1' : ['entityName'],
   '0' : [null, function(line, push) {
