@@ -37,7 +37,12 @@ var valueMapRange = function(obj, start, end, name, fn, suffixNumber) {
       }
     }
 
-    obj[i + ''] = [key, fn];
+    var op = [key];
+    if (typeof fn === 'function') {
+      op.push(fn);
+    }
+
+    obj[i + ''] = op;
   }
 };
 
@@ -120,6 +125,11 @@ valueMapRange(headerValueMap, 270, 289, 'value', parseInt);
 
 // Boolean flag value
 valueMapRange(headerValueMap, 290, 299, 'value', bool);
+
+// Arbitrary binary chunks with same representation and limits as
+// 1004 group codes: hexadecimal strings of up to 254 characters represent data chunks of up to 127 bytes
+// treat it like a string, if the user wants to decode, it's a new Buffer(..., 'hex') call away
+valueMapRange(headerValueMap, 290, 299, 'binary');
 
 // Hard-pointer handle; arbitrary hard pointers to other objects within same DXF
 // file or drawing. Translated during INSERT and XREF operations
@@ -514,7 +524,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // MLEADER
 // MLEADERSTYLE
 // MTEXT
-// OLEFRAME
 // OLE2FRAME
 // RAY
 // REGION
@@ -526,6 +535,23 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // VERTEX
 // VIEWPORT
 // WIPEOUT
+
+entityValueMaps.OLEFRAME = extend(commonEntityGroupCodes, {
+  '70' : ['version', parseInt],
+  '90' : ['length', parseInt]
+  // binary data is tracked in common
+});
+
+entityValueMaps.OLE2FRAME = extend(entityValueMaps.OLEFRAME, {
+  // 1 = link
+  // 2 = embedded,
+  // 3 = static
+  '71' : ['oleType', parseInt],
+
+  // 0 = model space
+  // 1 = paper space
+  '72' : ['tileMode', parseInt],
+});
 
 entityValueMaps.SEQEND = extend(commonEntityGroupCodes, {}); // uses common codes
 
@@ -629,7 +655,12 @@ processors.ENTITIES = function(line, push) {
       var res = last[1](line, push);
 
       if (typeof res !== 'undefined') {
-        currentEntity[last[0]] = res;
+        if (currentEntity[last[0]]) {
+          // concatinate strings and such
+          currentEntity[last[0]] += res;
+        } else {
+          currentEntity[last[0]] = res;
+        }
       }
 
     } else {
