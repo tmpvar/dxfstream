@@ -320,16 +320,33 @@ var commonEntityGroupCodes = extend(headerValueMap, {
 
 var entityValueMaps = {};
 
-entityValueMaps.CIRCLE = extend(commonEntityGroupCodes, {
-  '40' : ['radius', parseFloat],
-});
-
 entityValueMaps.ARC = extend(entityValueMaps.CIRCLE, {
   // TODO: figure out why there is a value: 0 in the result
 
   '50' : ['startAngle', parseFloat],
   '51' : ['endAngle', parseFloat],
 });
+
+entityValueMaps.BODY = extend(commonEntityGroupCodes, {
+  '1' : [null, function(line) {
+    if (!currentEntity.proprietaryData) {
+      currentEntity.proprietaryData = [];
+    }
+    currentEntity.proprietaryData.push(line);
+  }],
+
+  // extra proprietary data (>255 bytes in group 1)
+  '3' : [null, function(line) {
+    currentEntity.proprietaryData.push(line);
+  }]
+
+  '70' : ['version'],
+});
+
+entityValueMaps.CIRCLE = extend(commonEntityGroupCodes, {
+  '40' : ['radius', parseFloat],
+});
+
 
 entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
   '10' : ['centerX', parseFloat],
@@ -406,10 +423,6 @@ entityValueMaps.POLYLINE = extend(commonEntityGroupCodes, {
   '66' : [null, noop],
 });
 
-
-// TODO: we may need to change 10, 20, 30 here to include multiple points
-
-
 entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '10' : [null, function(line) {
     if (!currentEntity.vertices) {
@@ -469,7 +482,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // ACAD_PROXY_ENTITY
 // ATTDEF
 // ATTRIB
-// BODY
 // DIMENSION
 // HATCH
 // HELIX
@@ -490,7 +502,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // SURFACE
 // TABLE
 // TEXT
-// TOLERANCE
 // VERTEX
 // VIEWPORT
 // WIPEOUT
