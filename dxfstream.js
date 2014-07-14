@@ -318,6 +318,10 @@ var commonEntityGroupCodes = extend(headerValueMap, {
 
 var entityValueMaps = {};
 
+entityValueMaps.CIRCLE = extend(commonEntityGroupCodes, {
+  '40' : ['radius', parseFloat]
+});
+
 entityValueMaps.ARC = extend(entityValueMaps.CIRCLE, {
   // TODO: figure out why there is a value: 0 in the result
 
@@ -340,11 +344,6 @@ entityValueMaps.BODY = extend(commonEntityGroupCodes, {
 
   '70' : ['version']
 });
-
-entityValueMaps.CIRCLE = extend(commonEntityGroupCodes, {
-  '40' : ['radius', parseFloat]
-});
-
 
 entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
   '10' : ['centerX', parseFloat],
