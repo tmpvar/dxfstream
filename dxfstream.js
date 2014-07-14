@@ -494,11 +494,21 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // TABLE
 // TEXT
 // TOLERANCE
-// TRACE
-// UNDERLAY
 // VERTEX
 // VIEWPORT
 // WIPEOUT
+
+
+entityValueMaps.TOLERANCE = extend(commonEntityGroupCodes, {
+  '1' : 'name',
+  '3' : ['dimensionStyleName'],
+  '11' : ['directionX', parseFloat],
+  '21' : ['directionY', parseFloat],
+  '31' : ['directionZ', parseFloat]
+});
+
+entityValueMaps.TRACE = extend(commonEntityGroupCodes, {}); // uses common codes
+
 
 entityValueMaps.UNDERLAY = extend(commonEntityGroupCodes, {
   '10' : [null, function(line) {
