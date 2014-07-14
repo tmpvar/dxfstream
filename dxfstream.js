@@ -487,7 +487,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // REGION
 // SECTION
 // SEQEND
-// SHAPE
 // SOLID
 // SURFACE
 // TABLE
@@ -497,6 +496,12 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // VIEWPORT
 // WIPEOUT
 
+entityValueMaps.SHAPE = extend(commonEntityGroupCodes, {
+  '40' : ['size', parseFloat],
+  '41' : ['relativeScaleX', parseFloat], // optional; default = 1
+  '50' : ['rotationAngle', parseFloat], // optional; default = 0
+  '51' : ['obliqueAngle', parseFloat] // optional; default = 0
+});
 
 entityValueMaps.SUN = extend(commonEntityGroupCodes, {
   '40' : ['intensity', parseFloat],
