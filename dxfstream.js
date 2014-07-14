@@ -354,6 +354,72 @@ entityValueMaps.BODY = extend(commonEntityGroupCodes, {
   '70' : ['version', parseInt]
 });
 
+// DIMENSION
+entityValueMaps.DIMENSION = extend(commonEntityGroupCodes, {
+
+  // Dimension text explicitly entered by the user. Optional; default is the measurement.
+  // If null or “<>”, the dimension measurement is drawn as the text,
+  // if ““ (one blank space), the text is suppressed.
+  // Anything else is drawn as the text
+  '1' : ['text'],
+
+  //  Name of the block that contains the entities that make up the dimension picture
+  // TODO: maybe resolve the block and include it?
+  '2' : ['blockName'],
+  '3' : ['styleName'],
+
+  '11' : ['textCenterX', parseFloat],
+  '21' : ['textCenterY', parseFloat],
+  '31' : ['textCenterZ', parseFloat],
+
+  //Dimension text-line spacing factor (optional):
+  // Percentage of default (3-on-5) line spacing to be applied.
+  //Valid values range from 0.25 to 4.00
+  '41' : ['lineSpacing', parseFloat],
+
+  '42' : ['actualMeasurement', parseFloat],
+
+  '51' : ['horizontalDirection', parseFloat],
+  '53' : ['rotation', parseFloat],
+
+  // Dimension type:
+  // Values 0-6 are integer values that represent the dimension type.
+  // Values 32, 64, and 128 are bit values, which are added to the integer values
+  // (value 32 is always set in R13 and later releases)
+
+  // 0 = Rotated, horizontal, or vertical;
+  // 1 = Aligned
+  // 2 = Angular
+  // 3 = Diameter
+  // 4 = Radius
+  // 5 = Angular 3 point
+  // 6 = Ordinate
+  // 32 = Indicates that the block reference (group code 2) is referenced by this dimension only
+  // 64 = Ordinate type. This is a bit value (bit 7) used only with integer value 6.
+  //      If set, ordinate is X-type; if not set, ordinate is Y-type
+  // 128 = This is a bit value (bit 8) added to the other group 70 values if the dimension text
+  //       has been positioned at a user-defined location rather than at the default location
+  '70' : ['dimensionType', parseInt],
+
+  // Attachment point:
+  // 1 = Top left
+  // 2 = Top center
+  // 3 = Top right
+  // 4 = Middle left
+  // 5 = Middle center
+  // 6 = Middle right
+  // 7 = Bottom left
+  // 8 = Bottom center
+  // 9 = Bottom right
+  '71' : ['attachmentPoint', parseInt],
+
+  // 1 = at least (taller characters will override)
+  // 2 = exact (taller characters will not override)
+  '72' : ['lineSpacing', parseInt],
+
+
+});
+
 entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
   '10' : ['centerX', parseFloat],
   '11' : ['majorEndpointX', parseFloat],
@@ -512,7 +578,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // ACAD_PROXY_ENTITY
 // ATTDEF
 // ATTRIB
-// DIMENSION
 // HATCH
 // HELIX
 // IMAGE
@@ -649,7 +714,6 @@ entityValueMaps.TOLERANCE = extend(commonEntityGroupCodes, {
 });
 
 entityValueMaps.TRACE = extend(commonEntityGroupCodes, {}); // uses common codes
-
 
 entityValueMaps.UNDERLAY = extend(commonEntityGroupCodes, {
   '10' : [null, function(line) {
