@@ -192,7 +192,7 @@ valueMapRange(headerValueMap, 270, 289, 'value', parseInt);
 valueMapRange(headerValueMap, 290, 299, 'value', bool);
 
 //Arbitrary text strings
-valueMapRange(headerValueMap, 300, 309, 'value', bool);
+valueMapRange(headerValueMap, 300, 309, 'text');
 
 // Arbitrary binary chunks with same representation and limits as
 // 1004 group codes: hexadecimal strings of up to 254 characters represent data chunks of up to 127 bytes
@@ -605,6 +605,55 @@ entityValueMaps.LWPOLYLINE = extend(commonEntityGroupCodes, {
   '90' : ['totalVertices', parseInt],
 });
 
+entityValueMaps.MLEADER = extend(entityValueMaps.LINE, {
+  '3' : ['mleaderStyle'],
+
+  '40' : ['firstSegmentAngleConstraint', parseFloat],
+  '41' : ['secondSegmentAngleConstraint', parseFloat],
+  '42' : ['landingCap', parseFloat],
+  '43' : ['doglegLength', parseFloat],
+  '44' : ['arrowHeadSize', parseFloat],
+  '45' : ['textHeight', parseFloat],
+  '46' : ['alignSpace', parseFloat],
+  '47' : ['blockContentScaleX', parseFloat],
+  '49' : ['blockContentScaleY', parseFloat],
+
+  '90' : ['maxLeaderSegmentPoints', parseInt],
+  '91' : ['leaderLineColor', parseInt],
+  '92' : ['leaderLineWeight', parseInt],
+  '93' : ['textColor', parseInt],
+  '94' : ['blockContentColor', parseInt],
+
+  '140' : ['blockContentScaleZ', parseFloat],
+  '141' : ['blockContentRotation', parseFloat],
+  '142' : ['scale', parseFloat],
+  '142' : ['breakGapSize', parseFloat],
+
+  '170' : ['contentType', parseInt],
+  '171' : ['drawMLeaderOrderType', parseInt],
+  '172' : ['contentType', parseInt],
+  '173' : ['leaderLineType', parseInt],
+  '174' : ['textLeftAttachmentType', parseInt],
+  '175' : ['textAngleType', parseInt],
+  '176' : ['textAlignentType', parseInt],
+  '178' : ['textRightAttachmentType', parseInt],
+
+  '290' : ['enableLanding', bool],
+  '291' : ['enableDogLeg', bool],
+  '292' : ['enableFrameText', bool],
+  '293' : ['enableBlockContentScale', bool],
+  '294' : ['enableBlockContentRotation', bool],
+  '295' : ['overwritePropertyValue', bool],
+  '295' : ['isAnnotative', bool],
+
+  '300' : ['mtextContents'],
+
+  '340' : ['leaderLineTypeId', hex],
+  '341' : ['arrowHeadId', hex],
+  '342' : ['mTextStyleId', hex],
+  '342' : ['blockContentId', hex],
+});
+
 entityValueMaps.MLINE = extend(entityValueMaps.LINE, {
   '2' : ['style'],
   '12' : ['directionVectorX'],
@@ -703,7 +752,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // LEADER
 // LIGHT
 // MLINE
-// MLEADER
 // MLEADERSTYLE
 // MTEXT
 // SOLID
