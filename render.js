@@ -18,7 +18,6 @@ window.addEventListener('keydown', function(ev) {
 
 var ctx = window.getContext('2d');
 
-// polyfill lifted from https://github.com/google/canvas-5-polyfill/blob/master/canvasv5.js
 // TODO: implement this in context2d w/ tests
 ctx.ellipse = function(x, y, radiusX, radiusY, rotation, startAngle, endAngle, antiClockwise) {
   this.save();
@@ -34,11 +33,11 @@ ctx.ellipse = function(x, y, radiusX, radiusY, rotation, startAngle, endAngle, a
 ctx.fillStyle = '#112';
 ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 ctx.translate(window.innerWidth/2-200, window.innerHeight/2-200);
-// ctx.scale(50, 50)
+ctx.scale(50, 50)
 
 // ctx.scale(.5, .5)
-// ctx.lineWidth = .05;
-// ctx.strokeStyle = "red";
+ctx.lineWidth = .01;
+// // ctx.strokeStyle = "red";
 // ctx.fillStyle = "red";
 
 
@@ -55,10 +54,10 @@ var min = Math.min;
 var max = Math.max;
 var renderers = {
   line : function(d) {
+    console.log(d);
     ctx.beginPath();
-      ctx.moveTo(d.x1, d.y1);
+      ctx.moveTo(d.x, d.y);
       ctx.lineTo(d.x2, d.y2);
-      // ctx.lineWidth = .04;
       ctx.strokeStyle = d.layerName === 'VISIBLE' ? "green" : 'orange'
       ctx.stroke();
   },
@@ -123,7 +122,12 @@ var renderers = {
         ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
       }
       // curve through the last two points
-      ctx.quadraticCurveTo(points[i].x, points[i].y, points[i+1].x,points[i+1].y);
+      ctx.quadraticCurveTo(
+        points[i].x,
+        points[i].y,
+        points[i+1].x,
+        points[i+1].y
+      );
 
       ctx.strokeStyle = "#F0F";
       ctx.stroke();
