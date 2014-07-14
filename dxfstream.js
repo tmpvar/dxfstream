@@ -524,8 +524,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // MLEADER
 // MLEADERSTYLE
 // MTEXT
-// OLE2FRAME
-// RAY
 // REGION
 // SECTION
 // SOLID
@@ -551,6 +549,12 @@ entityValueMaps.OLE2FRAME = extend(entityValueMaps.OLEFRAME, {
   // 0 = model space
   // 1 = paper space
   '72' : ['tileMode', parseInt],
+});
+
+entityValueMaps.RAY = extend(commonEntityGroupCodes, {
+  '11' : ['directionX', parseFloat],
+  '21' : ['directionY', parseFloat],
+  '31' : ['directionZ', parseFloat]
 });
 
 entityValueMaps.SEQEND = extend(commonEntityGroupCodes, {}); // uses common codes
