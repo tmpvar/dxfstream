@@ -486,7 +486,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // RAY
 // REGION
 // SECTION
-// SEQEND
 // SOLID
 // SURFACE
 // TABLE
@@ -495,6 +494,8 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // VERTEX
 // VIEWPORT
 // WIPEOUT
+
+entityValueMaps.SEQEND = extend(commonEntityGroupCodes, {}); // uses common codes
 
 entityValueMaps.SHAPE = extend(commonEntityGroupCodes, {
   '40' : ['size', parseFloat],
