@@ -352,7 +352,7 @@ entityValueMaps.BODY = extend(commonEntityGroupCodes, {
     currentEntity.proprietaryData.push(line);
   }],
 
-  '70' : ['version']
+  '70' : ['version', parseInt]
 });
 
 entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
@@ -524,7 +524,6 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // MLEADER
 // MLEADERSTYLE
 // MTEXT
-// REGION
 // SECTION
 // SOLID
 // SURFACE
@@ -556,6 +555,8 @@ entityValueMaps.RAY = extend(commonEntityGroupCodes, {
   '21' : ['directionY', parseFloat],
   '31' : ['directionZ', parseFloat]
 });
+
+entityValueMaps.REGION = extend(entityValueMaps.BODY, {}); // Extends completely off of BODY
 
 entityValueMaps.SEQEND = extend(commonEntityGroupCodes, {}); // uses common codes
 
