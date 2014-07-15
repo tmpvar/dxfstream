@@ -32,11 +32,11 @@ ctx.ellipse = function(x, y, radiusX, radiusY, rotation, startAngle, endAngle, a
 
 ctx.fillStyle = '#112';
 ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-ctx.translate(window.innerWidth/2-200, window.innerHeight/2-200);
-ctx.scale(50, 50)
-
+ctx.translate(window.innerWidth/2-200, window.innerHeight/2+300);
+// ctx.scale(50, 50)
+ctx.scale(5, -5);
 // ctx.scale(.5, .5)
-ctx.lineWidth = .01;
+ctx.lineWidth = .1;
 // // ctx.strokeStyle = "red";
 // ctx.fillStyle = "red";
 
@@ -60,8 +60,8 @@ var renderers = {
 
     ctx.save();
       ctx.beginPath()
-        ctx.translate(d.x, d.y);
-        ctx.arc(0, 0, d.radius, a1, a2, false)
+        ctx.translate(d.x * 25.4, d.y * 25.4);
+        ctx.arc(0, 0, d.radius * 25.4, a1, a2, false)
 
         ctx.strokeStyle = "yellow";
         ctx.stroke();
@@ -71,8 +71,8 @@ var renderers = {
 
     ctx.save();
       ctx.beginPath()
-        ctx.translate(d.x, d.y);
-        ctx.arc(0, 0, d.radius, 0, Math.PI*2, false)
+        ctx.translate(d.x * 25.4, d.y * 25.4);
+        ctx.arc(0, 0, d.radius * 25.4, 0, Math.PI*2, false)
 
         ctx.strokeStyle = "yellow";
         ctx.stroke();
@@ -132,8 +132,8 @@ var renderers = {
 
   line : function(d) {
     ctx.beginPath();
-      ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x2, d.y2);
+      ctx.moveTo(d.x * 25.4, d.y * 25.4);
+      ctx.lineTo(d.x2 * 25.4, d.y2 * 25.4);
       ctx.strokeStyle = d.layerName === 'VISIBLE' ? "green" : 'orange'
       ctx.stroke();
   },
@@ -152,6 +152,48 @@ var renderers = {
       ctx.strokeStyle = "pink";
     ctx.closePath();
     ctx.stroke();
+  },
+
+  mtext : function(d) {
+    ctx.strokeStyle = ctx.fillStyle = 'grey';
+
+    var text = d.text.substr(1, d.text.length-2).replace('\r', '').replace(/\t/, ' ');
+    var x = d.x * 25.4;
+    var y = d.y * 25.4;
+    // stupid simple line wrapping
+    var textParts = text.split(' ');
+    var top = 0;
+
+    var textHeight = 25.4 * d.textHeight;
+
+    // TODO: choose font
+    ctx.font = '35px san-serif';
+    var rectw = d.referenceRectangleWidth * 25.4;
+    var line = '';
+    textParts.forEach(function(word) {
+      var c = line;
+      if (line.length) {
+        c += ' ' + word;
+      } else {
+        c = word;
+      }
+
+      var w = ctx.measureText(c).width;
+
+      if (w > rectw) {
+        ctx.save()
+        ctx.scale(d.textHeight, -d.textHeight);
+
+        // TODO: this needs to be computed
+        ctx.translate(x*3.75 + 5, -325);
+        ctx.fillText(line.length ? line : c, x, -y+top);
+        ctx.restore();
+        top += d.value * 25.4 * 2.5;
+        line = '';
+      } else {
+        line = c;
+      }
+    });
   },
 
   spline : function(d) {
@@ -202,5 +244,7 @@ console.log(data);
     }
   }
 }).on('end', function() {
+
   window.requestAnimationFrame(function() {}) // render it.
+  // process.exit();
 })
