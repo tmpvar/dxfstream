@@ -22,6 +22,10 @@ var hex = function(val) {
   return parseInt(val, 16);
 };
 
+var pint = function(val) {
+  return parseInt(val, 10);
+};
+
 var pleaseHelp = function(line) {
   throw new Error(
     "Looks like there is some ambiguity here with " +
@@ -93,20 +97,20 @@ var headerValueMap = {
   // 50-58 seen in range below
 
   // 16-bit integer value
-  '60' : ['visibility', parseInt],
-  '61' : ['value', parseInt],
-  '62' : ['colorNumber', parseInt],
-  '63' : ['backgroundColor', parseInt],
-  '64' : ['value', parseInt],
-  '65' : ['value', parseInt],
-  '66' : ['entitiesFollow', parseInt],
+  '60' : ['visibility', pint],
+  '61' : ['value', pint],
+  '62' : ['colorNumber', pint],
+  '63' : ['backgroundColor', pint],
+  '64' : ['value', pint],
+  '65' : ['value', pint],
+  '66' : ['entitiesFollow', pint],
 
   // model or paper space
-  '67' : ['space', parseInt],
+  '67' : ['space', pint],
 
   // identifies whether viewport is on but fully off screen; is not active or is off
-  '68' : ['viewportStatus', parseInt],
-  '69' : ['viewportId', parseInt],
+  '68' : ['viewportStatus', pint],
+  '69' : ['viewportId', pint],
 
   // 70-78 seen in range below
   // 80 - 89 undefined
@@ -114,13 +118,13 @@ var headerValueMap = {
 
   '100' : ['subclass'],
   '102' : ['controlString'],
-  '105' : ['dimvarEntry', parseInt],
+  '105' : ['dimvarEntry', pint],
 
   // Coordinate System (UCS) origin
   // appears this is used with the VIEWPORT Entity
-  '110' : ['ucsX', parseInt],
-  '111' : ['ucsX', parseInt],
-  '112' : ['ucsX', parseInt],
+  '110' : ['ucsX', pint],
+  '111' : ['ucsX', pint],
+  '112' : ['ucsX', pint],
   '120' : ['ucsY', parseFloat],
   '121' : ['ucsY', parseFloat],
   '122' : ['ucsY', parseFloat],
@@ -163,8 +167,8 @@ var headerValueMap = {
   '1041' : ['distance', parseFloat],
   '1042' : ['scale', parseFloat],
 
-  '1070' : ['extendedValue', parseInt],
-  '1071' : ['extendedValue', parseInt],
+  '1070' : ['extendedValue', pint],
+  '1071' : ['extendedValue', pint],
 
 };
 
@@ -182,19 +186,19 @@ valueMapRange(headerValueMap, 40, 47, 'value', parseFloat);
 valueMapRange(headerValueMap, 50, 58, 'value', parseFloat);
 
 // Integer values (repeat counts, flag bits, or modes)
-valueMapRange(headerValueMap, 70, 78, 'value', parseInt);
+valueMapRange(headerValueMap, 70, 78, 'value', pint);
 
 // 32-bit integer values
-valueMapRange(headerValueMap, 90, 99, 'value', parseInt);
+valueMapRange(headerValueMap, 90, 99, 'value', pint);
 
 // Double-precision floating-point values (points, elevation, and DIMSTYLE settings, for example)
 valueMapRange(headerValueMap, 140, 149, 'value', parseFloat);
 
 // 16-bit integer values, such as flag bits representing DIMSTYLE settings
-valueMapRange(headerValueMap, 170, 179, 'value', parseInt);
+valueMapRange(headerValueMap, 170, 179, 'value', pint);
 
 // 16-bit integer value
-valueMapRange(headerValueMap, 270, 289, 'value', parseInt);
+valueMapRange(headerValueMap, 270, 289, 'value', pint);
 
 // Boolean flag value
 valueMapRange(headerValueMap, 290, 299, 'value', bool);
@@ -234,14 +238,14 @@ valueMapRange(headerValueMap, 360, 369, 'pointer', hex);
 // their representation, because AutoCAD and AutoLISP both
 // always assume a 370 group code is the entity's lineweight.
 // This allows 370 to behave like other “common” entity fields
-valueMapRange(headerValueMap, 370, 379, 'lineWeight', parseInt);
+valueMapRange(headerValueMap, 370, 379, 'lineWeight', pint);
 
 // PlotStyleName type enum (AcDb::PlotStyleNameType).
 // Stored and moved around as a 16-bit integer.
 // Custom non-entity objects may use the full range, but entity classes
 // only use 381-389 DXF group codes in their representation, for the
 // same reason as the Lineweight range above
-valueMapRange(headerValueMap, 380, 389, 'plotStyle', parseInt);
+valueMapRange(headerValueMap, 380, 389, 'plotStyle', pint);
 
 // String representing handle value of the PlotStyleName object,
 // basically a hard pointer, but has a different range to make backward
@@ -253,7 +257,7 @@ valueMapRange(headerValueMap, 380, 389, 'plotStyle', parseInt);
 valueMapRange(headerValueMap, 380, 389, 'plotStyleName');
 
 // 16-bit integers
-valueMapRange(headerValueMap, 400, 409, 'value', parseInt);
+valueMapRange(headerValueMap, 400, 409, 'value', pint);
 
 // String
 valueMapRange(headerValueMap, 410, 419, 'string');
@@ -265,16 +269,16 @@ valueMapRange(headerValueMap, 410, 419, 'string');
 // Convering this integer value to hexadecimal yields the following bit mask: 0x00RRGGBB.
 // For example, a true color with Red==200, Green==100 and Blue==50 is 0x00C86432, and in DXF,
 // in decimal, 13132850
-valueMapRange(headerValueMap, 420, 427, 'value', parseInt);
+valueMapRange(headerValueMap, 420, 427, 'value', pint);
 
 // String; when used for True Color, a string representing the name of the color
 valueMapRange(headerValueMap, 430, 437, 'string');
 
 // 32-bit integer value
-valueMapRange(headerValueMap, 440, 447, 'value', parseInt);
+valueMapRange(headerValueMap, 440, 447, 'value', pint);
 
 // Long
-valueMapRange(headerValueMap, 450, 459, 'value', parseInt);
+valueMapRange(headerValueMap, 450, 459, 'value', pint);
 
 // Double-precision floating-point value
 valueMapRange(headerValueMap, 460, 469, 'value', parseFloat);
@@ -303,12 +307,10 @@ processors.HEADER = function(line) {
     if (headerValueMap[line]) {
       last = headerValueMap[line];
     } else {
-      console.log('no value map for', line, last);
+      last = ['UNKNOWN-' + line];
     }
   } else {
-    if (!last) {
-      console.log('miss', line, count);
-    } else if (typeof last[1] === 'function') {
+    if (typeof last[1] === 'function') {
       var res = last[1](line);
       if (typeof res !== 'undefined') {
         header[last[0]] = res;
@@ -335,8 +337,8 @@ var classesValueMap = {
   }],
   '2' : ['className'],
   '3' : ['applicationName'],
-  '90' : ['capabilities', parseInt],
-  '91' : ['count', parseInt],
+  '90' : ['capabilities', pint],
+  '91' : ['count', pint],
   '280' : ['wasProxy', bool],
   '281' : ['isEntity', bool],
 }
@@ -346,13 +348,11 @@ processors.CLASSES = function(line) {
     if (classesValueMap[line]) {
       last = classesValueMap[line];
     } else {
-      console.log('no value map for', line, last);
+      last = ['UNKNOWN-' + line];
     }
 
   } else {
-    if (!last) {
-      console.log('miss', line, count);
-    } else if (typeof last[1] === 'function') {
+    if (typeof last[1] === 'function') {
       var res = last[1](line);
       if (typeof res !== 'undefined') {
         currentClass[last[0]] = res;
@@ -403,14 +403,11 @@ processors.BLOCKS = function(line) {
     if (blockValueMap[line]) {
       last = blockValueMap[line];
     } else {
-      console.log('no value map for', line, last);
-      process.exit();
+      last = ['UNKNOWN-' + line];
     }
 
   } else {
-    if (!last) {
-      console.log('miss', line, count);
-    } else if (typeof last[1] === 'function') {
+     if (typeof last[1] === 'function') {
       var res = last[1](line);
 
       if (typeof res !== 'undefined') {
@@ -429,7 +426,7 @@ processors.BLOCKS = function(line) {
 var entities = [], currentEntity, currentType;
 var commonEntityGroupCodes = extend(headerValueMap, {
   '-1' : ['entityName'],
-  '0' : [null, function(line, push) {
+  '0' : [null, function(line, code, push) {
     if (currentEntity) {
       push(currentEntity);
       entities.push(currentEntity);
@@ -479,7 +476,7 @@ entityValueMaps.BODY = extend(commonEntityGroupCodes, {
     currentEntity.proprietaryData.push(line);
   }],
 
-  '70' : ['version', parseInt]
+  '70' : ['version', pint]
 });
 
 // DIMENSION
@@ -527,7 +524,7 @@ entityValueMaps.DIMENSION = extend(commonEntityGroupCodes, {
   //      If set, ordinate is X-type; if not set, ordinate is Y-type
   // 128 = This is a bit value (bit 8) added to the other group 70 values if the dimension text
   //       has been positioned at a user-defined location rather than at the default location
-  '70' : ['dimensionType', parseInt],
+  '70' : ['dimensionType', pint],
 
   // Attachment point:
   // 1 = Top left
@@ -539,11 +536,11 @@ entityValueMaps.DIMENSION = extend(commonEntityGroupCodes, {
   // 7 = Bottom left
   // 8 = Bottom center
   // 9 = Bottom right
-  '71' : ['attachmentPoint', parseInt],
+  '71' : ['attachmentPoint', pint],
 
   // 1 = at least (taller characters will override)
   // 2 = exact (taller characters will not override)
-  '72' : ['lineSpacing', parseInt],
+  '72' : ['lineSpacing', pint],
 });
 
 entityValueMaps.ELLIPSE = extend(commonEntityGroupCodes, {
@@ -571,19 +568,19 @@ entityValueMaps.LIGHT = extend(commonEntityGroupCodes, {
   // 1 = distant
   // 2 = point
   // 3 = spot
-  '70' : ['type', parseInt],
+  '70' : ['type', pint],
 
   // 0 = none
   // 1 = inverse linear
   // 2 = inverse square
-  '72' : ['attenuationType', parseInt],
+  '72' : ['attenuationType', pint],
 
   // 0 = ray traced
   // 1 = shadow maps
-  '73' : ['shadowType', parseInt],
+  '73' : ['shadowType', pint],
 
-  '91' : ['shadowMapSize', parseInt],
-  '280' : ['shadowMapSoftness', parseInt],
+  '91' : ['shadowMapSize', pint],
+  '280' : ['shadowMapSoftness', pint],
   '290' : ['status', bool],
   '291' : ['plotGlyph', bool],
   '291' : ['castShadows', bool],
@@ -608,9 +605,9 @@ entityValueMaps.LWPOLYLINE = extend(commonEntityGroupCodes, {
   '40' : ['startingWidth', parseFloat],
   '41' : ['endWidth', parseFloat],
   '42' : ['bulge', parseFloat],
-  '42' : ['constantWidth', parseInt],
-  '70' : ['polylineFlag', parseInt], // 1 = Closed; 128 = Plinegen
-  '90' : ['totalVertices', parseInt],
+  '42' : ['constantWidth', pint],
+  '70' : ['polylineFlag', pint], // 1 = Closed; 128 = Plinegen
+  '90' : ['totalVertices', pint],
 });
 
 entityValueMaps.MLEADER = extend(entityValueMaps.LINE, {
@@ -626,25 +623,25 @@ entityValueMaps.MLEADER = extend(entityValueMaps.LINE, {
   '47' : ['blockContentScaleX', parseFloat],
   '49' : ['blockContentScaleY', parseFloat],
 
-  '90' : ['maxLeaderSegmentPoints', parseInt],
-  '91' : ['leaderLineColor', parseInt],
-  '92' : ['leaderLineWeight', parseInt],
-  '93' : ['textColor', parseInt],
-  '94' : ['blockContentColor', parseInt],
+  '90' : ['maxLeaderSegmentPoints', pint],
+  '91' : ['leaderLineColor', pint],
+  '92' : ['leaderLineWeight', pint],
+  '93' : ['textColor', pint],
+  '94' : ['blockContentColor', pint],
 
   '140' : ['blockContentScaleZ', parseFloat],
   '141' : ['blockContentRotation', parseFloat],
   '142' : ['scale', parseFloat],
   '142' : ['breakGapSize', parseFloat],
 
-  '170' : ['contentType', parseInt],
-  '171' : ['drawMLeaderOrderType', parseInt],
-  '172' : ['contentType', parseInt],
-  '173' : ['leaderLineType', parseInt],
-  '174' : ['textLeftAttachmentType', parseInt],
-  '175' : ['textAngleType', parseInt],
-  '176' : ['textAlignentType', parseInt],
-  '178' : ['textRightAttachmentType', parseInt],
+  '170' : ['contentType', pint],
+  '171' : ['drawMLeaderOrderType', pint],
+  '172' : ['contentType', pint],
+  '173' : ['leaderLineType', pint],
+  '174' : ['textLeftAttachmentType', pint],
+  '175' : ['textAngleType', pint],
+  '176' : ['textAlignentType', pint],
+  '178' : ['textRightAttachmentType', pint],
 
   '290' : ['enableLanding', bool],
   '291' : ['enableDogLeg', bool],
@@ -662,6 +659,8 @@ entityValueMaps.MLEADER = extend(entityValueMaps.LINE, {
   '342' : ['blockContentId', hex],
 });
 
+
+var extendedData;
 entityValueMaps.MTEXT = extend(entityValueMaps.LINE, {
   '1' : ['text'],
   '3' : [null, function(line) {
@@ -685,10 +684,15 @@ entityValueMaps.MTEXT = extend(entityValueMaps.LINE, {
   '48' : ['columnWidth', parseFloat],
   '49' : ['columnGutter', parseFloat],
 
-  '50' : ['rotationOrColumnHeights', pleaseHelp], // radians
+  '50' : ['rotationOrColumnHeights', function(line) {
+    if (!currentEntity.rotation) { // in radians
+      currentEntity.rotation = parseFloat(line);
+    } else {
+      currentEntity.rotation = parseFloat(line);
+    }
+  }], // radians
 
-  '63' : ['backgroundColor', parseInt],
-
+  '63' : ['backgroundColor', pint],
 
   // 1 = Top left
   // 2 = Top center
@@ -699,34 +703,55 @@ entityValueMaps.MTEXT = extend(entityValueMaps.LINE, {
   // 7 = Bottom left
   // 8 = Bottom center
   // 9 = Bottom right
-  '71' : ['attachmentPoint', parseInt],
+  '71' : ['attachmentPoint', pint],
 
   // 1 = left to right
   // 3 = top to bottom
   // 5 = by style ()
-  '72' : ['drawingDirection', parseInt],
+  '72' : ['drawingDirection', pint],
 
   // 1 = at least
   // 2 = exact
-  '73' : ['lineSpacing', parseInt],
+  '73' : ['lineSpacing', pint],
 
-  '75' : ['columnType', parseInt],
-  '76' : ['columnCount', parseInt],
-  '78' : ['columnFlowReversed', parseInt],
-  '79' : ['columnAutoHeight', parseInt],
+  '75' : ['columnType', pint],
+  '76' : ['columnCount', pint],
+  '78' : ['columnFlowReversed', pint],
+  '79' : ['columnAutoHeight', pint],
 
   // 0 = Background fill off
   // 1 = Use background fill color
   // 2 = Use drawing window color as background fill color
-  '90' : ['backgroundFill', parseInt],
+  '90' : ['backgroundFill', pint],
 
   // not implemented in spec, but eff it.
-  '441' : ['backgroundTransparency', parseInt]
+  '441' : ['backgroundTransparency', pint],
+
+  '1000' : [null, function(line) {
+    var begin = '_BEGIN';
+    if (line.indexOf(begin) > -1) {
+      if (!currentEntity.extendedData) {
+        currentEntity.extendedData = {};
+      }
+
+      extendedData = currentEntity.extendedData[line.substr(0, line.length-begin.length)] = {};
+
+    } else {
+      // end of extended data
+      extendedData = null;
+    }
+  }]
 
 });
 
 valueMapRange(entityValueMaps.MTEXT, 420, 429, 'backgroundColorRGB');
 valueMapRange(entityValueMaps.MTEXT, 430, 439, 'backgroundColorName');
+
+valueMapRange(entityValueMaps.MTEXT, 1001, 1071, null, function(line, code) {
+  var fn = headerValueMap[code][1] || null;
+  var target = extendedData || currentEntity.extendedData || currentEntity;
+  target[headerValueMap[code][0]] = fn ? fn(line) : line;
+});
 
 
 
@@ -748,12 +773,12 @@ entityValueMaps.MLINE = extend(entityValueMaps.LINE, {
   // TODO: this repeats based on 75
   '41' : ['areaFillParameters', parseFloat],
 
-  '70' : ['justification', parseInt], // 0 = Top; 1 = Zero; 2 = Bottom
+  '70' : ['justification', pint], // 0 = Top; 1 = Zero; 2 = Bottom
   '71' : ['flags', parseFloat],
-  '72' : ['totalVertices', parseInt],
-  '73' : ['totalStyleElements', parseInt], // Number of elements in MLINESTYLE definition
-  '73' : ['totalElementParameters', parseInt], // Number of elements in MLINESTYLE definition
-  '75' : ['totalAreaFillParameters', parseInt], // Number of elements in MLINESTYLE definition
+  '72' : ['totalVertices', pint],
+  '73' : ['totalStyleElements', pint], // Number of elements in MLINESTYLE definition
+  '73' : ['totalElementParameters', pint], // Number of elements in MLINESTYLE definition
+  '75' : ['totalAreaFillParameters', pint], // Number of elements in MLINESTYLE definition
 
   '340' : ['styleReference', hex], // Pointer-handle/ID of MLINESTYLE object
 });
@@ -801,11 +826,11 @@ entityValueMaps.SPLINE = extend(commonEntityGroupCodes, {
   '43' : ['controlPointTolerance', parseFloat],
   '44' : ['fitTolerance', parseFloat],
 
-  '70' : ['flag', parseInt],
+  '70' : ['flag', pint],
   '71' : ['degree', parseFloat],
-  '72' : ['totalKnots', parseInt], // TODO: prepare knots array
-  '73' : ['totalControlPoints', parseInt], // TODO: prepare controlPoints array
-  '74' : ['totalFitPoints', parseInt], // TODO: prepare fit points array
+  '72' : ['totalKnots', pint], // TODO: prepare knots array
+  '73' : ['totalControlPoints', pint], // TODO: prepare controlPoints array
+  '74' : ['totalFitPoints', pint], // TODO: prepare fit points array
 });
 
 entityValueMaps.POINT = extend(commonEntityGroupCodes, {});
@@ -834,8 +859,8 @@ entityValueMaps.INSERT = extend(commonEntityGroupCodes, {});
 // VIEWPORT
 
 entityValueMaps.OLEFRAME = extend(commonEntityGroupCodes, {
-  '70' : ['version', parseInt],
-  '90' : ['length', parseInt]
+  '70' : ['version', pint],
+  '90' : ['length', pint]
   // binary data is tracked in common
 });
 
@@ -843,11 +868,11 @@ entityValueMaps.OLE2FRAME = extend(entityValueMaps.OLEFRAME, {
   // 1 = link
   // 2 = embedded,
   // 3 = static
-  '71' : ['oleType', parseInt],
+  '71' : ['oleType', pint],
 
   // 0 = model space
   // 1 = paper space
-  '72' : ['tileMode', parseInt],
+  '72' : ['tileMode', pint],
 });
 
 entityValueMaps.RAY = extend(commonEntityGroupCodes, {
@@ -859,7 +884,7 @@ entityValueMaps.RAY = extend(commonEntityGroupCodes, {
 entityValueMaps.REGION = extend(entityValueMaps.BODY, {}); // Extends completely off of BODY
 
 entityValueMaps.SECTION = extend(commonEntityGroupCodes, {
-  '1' : ['name', parseInt],
+  '1' : ['name', pint],
 
   '10' : ['verticalDirectionX', parseFloat],
   '20' : ['verticalDirectionY', parseFloat],
@@ -901,17 +926,17 @@ entityValueMaps.SECTION = extend(commonEntityGroupCodes, {
 
   '40' : ['topHeight', parseFloat],
   '41' : ['bottomHeight', parseFloat],
-  '63' : ['indicatorColor', parseInt],
-  '70' : ['indicatorTransparency', parseInt],
-  '90' : ['state', parseInt],
-  '91' : ['flags', parseInt],
-  '91' : ['totalVertices', parseInt],
+  '63' : ['indicatorColor', pint],
+  '70' : ['indicatorTransparency', pint],
+  '90' : ['state', pint],
+  '91' : ['flags', pint],
+  '91' : ['totalVertices', pint],
 
   // Hard-pointer ID/handle to geometry settings object
   '360' : ['geometrySettingsHandle', hex],
 
   // yeah this is a dupe of 63, not sure why
-  '411' : ['indicatorColor', parseInt],
+  '411' : ['indicatorColor', pint],
 });
 
 entityValueMaps.SEQEND = extend(commonEntityGroupCodes, {}); // uses common codes
@@ -928,14 +953,14 @@ entityValueMaps.SUN = extend(commonEntityGroupCodes, {
 
   // 0 = ray traced
   // 1 = shadow maps
-  '70' : ['shadowType', parseInt],
-  '71' : ['shadowMapSize', parseInt],
+  '70' : ['shadowType', pint],
+  '71' : ['shadowMapSize', pint],
 
-  '90' : ['version', parseInt],
-  '91' : ['julianDay', parseInt],
-  '92' : ['time', parseInt], // in seconds past midnight
+  '90' : ['version', pint],
+  '91' : ['julianDay', pint],
+  '92' : ['time', pint], // in seconds past midnight
 
-  '280' : ['shadowSoftness', parseInt],
+  '280' : ['shadowSoftness', pint],
 
   '290' : ['status', bool],
   '291' : ['shadows', bool],
@@ -981,10 +1006,10 @@ entityValueMaps.UNDERLAY = extend(commonEntityGroupCodes, {
   //   2 = Underlay is on
   //   4 = Monochrome
   //   8 = Adjust for background
-  '280' : ['flags', parseInt],
+  '280' : ['flags', pint],
 
-  '281' : ['contrast', parseInt], // value between 20 and 100
-  '281' : ['fade', parseInt]     // value between 0 and 80
+  '281' : ['contrast', pint], // value between 20 and 100
+  '281' : ['fade', pint]     // value between 0 and 80
 });
 
 entityValueMaps.VERTEX = extend(commonEntityGroupCodes, {
@@ -1003,14 +1028,14 @@ entityValueMaps.VERTEX = extend(commonEntityGroupCodes, {
   // 32 = 3D polyline vertex
   // 64 = 3D polygon mesh
   // 128 = Polyface mesh vertex
-  '70' : ['flags', parseInt],
+  '70' : ['flags', pint],
 
   // TODO: this may be a bug, but I would need a dxf
   //       that expresses this to fix
-  '71' : ['polyfaceMeshVertexIndex', parseInt],
-  '72' : ['polyfaceMeshVertexIndex', parseInt],
-  '73' : ['polyfaceMeshVertexIndex', parseInt],
-  '74' : ['polyfaceMeshVertexIndex', parseInt],
+  '71' : ['polyfaceMeshVertexIndex', pint],
+  '72' : ['polyfaceMeshVertexIndex', pint],
+  '73' : ['polyfaceMeshVertexIndex', pint],
+  '74' : ['polyfaceMeshVertexIndex', pint],
 
   '100' : ['subclass', function(line) {
     // wait for a line longer than AcDbVertex
@@ -1067,23 +1092,23 @@ entityValueMaps.WIPEOUT = extend(commonEntityGroupCodes, {
   // 1 = Show image
   // 2 = Show image when not aligned with screen 4 = Use clipping boundary
   // 8 = Transparency is on
-  '70' : ['display', parseInt],
+  '70' : ['display', pint],
   // Clipping Boundary Type
   // 1 = rectangular
   // 2 = polygonal
-  '71' : ['clippingBoundaryType', parseInt],
+  '71' : ['clippingBoundaryType', pint],
 
-  '90' : ['classVersion', parseInt],
-  '91' : ['totalClipVertices', parseInt],
+  '90' : ['classVersion', pint],
+  '91' : ['totalClipVertices', pint],
 
   // 0 = off
   // 1 = on
-  '280' : ['clippingState', parseInt],
+  '280' : ['clippingState', pint],
 
   // 0-100 (%)
-  '281' : ['brightness', parseInt],
-  '282' : ['contrast', parseInt],
-  '283' : ['fade', parseInt],
+  '281' : ['brightness', pint],
+  '282' : ['contrast', pint],
+  '283' : ['fade', pint],
 
   '340' : ['imagedef', hex],
   '360' : ['imagedefReactor', hex],
@@ -1095,6 +1120,7 @@ entityValueMaps.XLINE = extend(commonEntityGroupCodes, {
   '31' : ['directionZ', parseFloat]
 });
 
+var groupCode = null;
 processors.ENTITIES = function(line, push) {
   var source = currentType ?
                entityValueMaps[currentType] :
@@ -1105,16 +1131,14 @@ processors.ENTITIES = function(line, push) {
   if (pairWise) {
     if (source[line]) {
       last = source[line];
+      groupCode = line;
     } else {
-      console.error(currentType, 'no value map for', line, last);
-      // process.exit();
+      last = ['UNKNOWN-' + line];
     }
 
   } else {
-    if (!last) {
-      console.log('miss', line, count);
-    } else if (typeof last[1] === 'function') {
-      var res = last[1](line, push);
+    if (typeof last[1] === 'function') {
+      var res = last[1](line, groupCode, push);
 
       if (typeof res !== 'undefined') {
         if (currentEntity[last[0]]) {
