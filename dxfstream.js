@@ -684,13 +684,19 @@ entityValueMaps.MTEXT = extend(entityValueMaps.LINE, {
   '48' : ['columnWidth', parseFloat],
   '49' : ['columnGutter', parseFloat],
 
-  '50' : ['rotationOrColumnHeights', function(line) {
-    if (!currentEntity.rotation) { // in radians
-      currentEntity.rotation = parseFloat(line);
-    } else {
-      currentEntity.rotation = parseFloat(line);
-    }
-  }], // radians
+  // TODO: complete this
+  // '50' : ['rotationOrColumnHeights', function(line) {
+  //   if (!currentEntity.rotation) { // in radians
+  //     currentEntity.rotation = parseFloat(line);
+  //   } else {
+  //     currentEntity.rotation = parseFloat(line);
+  //   }
+  // }], // radians
+  '50' : ['rotation', function(line) {
+    console.log('ROTATION', line);
+    process.exit();
+  }],
+
 
   '63' : ['backgroundColor', pint],
 
@@ -965,6 +971,46 @@ entityValueMaps.SUN = extend(commonEntityGroupCodes, {
   '290' : ['status', bool],
   '291' : ['shadows', bool],
   '292' : ['daylightSavings', bool]
+});
+
+entityValueMaps.TEXT = extend(entityValueMaps.LINE, {
+  '1' : ['text'],
+  '7' : ['style'],
+
+  '11' : ['alignmentX', parseFloat],
+  '21' : ['alignmentY', parseFloat],
+  '31' : ['alignmentZ', parseFloat],
+
+  '40' : ['textHeight', parseFloat],
+  '41' : ['relativeScaleX', parseFloat],
+
+  '50' : ['rotation', parseFloat],
+  '51' : ['obliqueAngle', parseFloat],
+
+  // 2 = Text is backward (mirrored in X)
+  // 4 = Text is upside down (mirrored in Y)
+  '71' : ['generationFlags', parseInt],
+
+  // Horizontal text justification type (optional, default = 0)
+  // Not bit-coded
+  // 0 = Left;
+  // 1= Center;
+  // 2 = Right
+  // 3 = Aligned (if vertical alignment = 0)
+  // 4 = Middle (if vertical alignment = 0)
+  // 5 = Fit (if vertical alignment = 0)
+  // See the Group 72 and 73 integer codes table for clarification
+  '72' : ['horizontalJustificationType', parseInt],
+
+  // Vertical text justification type (optional, default = 0)
+  // not bit-coded
+  // 0 = Baseline
+  // 1 = Bottom
+  // 2 = Middle
+  // 3 = Top
+  '73' : ['verticalJustificationType', parseInt],
+
+
 });
 
 entityValueMaps.TOLERANCE = extend(commonEntityGroupCodes, {
