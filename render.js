@@ -32,11 +32,11 @@ ctx.ellipse = function(x, y, radiusX, radiusY, rotation, startAngle, endAngle, a
 
 ctx.fillStyle = '#112';
 ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-ctx.translate(window.innerWidth/2-200, window.innerHeight/2+300);
+ctx.translate(window.innerWidth/2-200, window.innerHeight/2+200);
 // ctx.scale(50, 50)
-ctx.scale(5, -5);
+ctx.scale(1, -1);
 // ctx.scale(.5, .5)
-ctx.lineWidth = .1;
+// ctx.lineWidth = .1;
 // // ctx.strokeStyle = "red";
 // ctx.fillStyle = "red";
 
@@ -143,10 +143,10 @@ var renderers = {
       var verts = d.vertices;
       var l = verts.length;
 
-      ctx.moveTo(verts[0].x, verts[0].y)
+      ctx.moveTo(verts[0].x*25.4, verts[0].y*25.4)
 
       for (var i = 0; i<l; i++) {
-        ctx.lineTo(verts[i].x, verts[i].y);
+        ctx.lineTo(verts[i].x*25.4, verts[i].y*25.4);
       }
 
       ctx.strokeStyle = "pink";
@@ -182,11 +182,11 @@ var renderers = {
 
       if (w > rectw) {
         ctx.save()
+        ctx.translate(x, y);//*3.75 + 5, -325);
         ctx.scale(d.textHeight, -d.textHeight);
 
         // TODO: this needs to be computed
-        ctx.translate(x*3.75 + 5, -325);
-        ctx.fillText(line.length ? line : c, x, -y+top);
+        ctx.fillText(line.length ? line : c, x, top);
         ctx.restore();
         top += d.value * 25.4 * 2.5;
         line = '';
@@ -201,19 +201,19 @@ var renderers = {
 
     var points = d.vertices;
     ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
+      ctx.moveTo(points[0].x*25.4, points[0].y*25.4);
 
       for (var i = 1; i < points.length - 2; i ++) {
-        var xc = (points[i].x + points[i + 1].x) / 2;
-        var yc = (points[i].y + points[i + 1].y) / 2;
-        ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+        var xc = (points[i].x*25.4 + points[i + 1].x*25.4) / 2;
+        var yc = (points[i].y*25.4 + points[i + 1].y*25.4) / 2;
+        ctx.quadraticCurveTo(points[i].x*25.4, points[i].y*25.4, xc, yc);
       }
       // curve through the last two points
       ctx.quadraticCurveTo(
-        points[i].x,
-        points[i].y,
-        points[i+1].x,
-        points[i+1].y
+        points[i].x*25.4,
+        points[i].y*25.4,
+        points[i+1].x*25.4,
+        points[i+1].y*25.4
       );
 
       ctx.strokeStyle = "#F0F";
@@ -222,7 +222,7 @@ var renderers = {
 
   point: function(d) {
     ctx.beginPath();
-    ctx.arc(d.x, d.y, 1, 0, Math.PI*2, false);
+    ctx.arc(d.x*25.4, d.y*25.4, 1, 0, Math.PI*2, false);
     ctx.fillStyle = "white";
     ctx.fill();
   },
@@ -230,6 +230,30 @@ var renderers = {
   polyline: function(d) {
     console.log('polyline', d)
   },
+
+  text: function(d) {
+
+    ctx.strokeStyle = ctx.fillStyle = 'grey';
+
+    var text = d.text;
+    var x = d.x * 25.4;
+    var y = d.y * 25.4;
+
+    var textHeight = 25.4 * d.textHeight;
+
+    // TODO: choose the actual font
+    ctx.font ='35px Arial';
+    ctx.save()
+      ctx.translate(x, y);
+      ctx.scale(d.textHeight, -d.textHeight);
+      d.rotation && ctx.rotate(-rads(d.rotation));
+      ctx.fillText(text, 0, 0);
+    ctx.restore();
+  },
+
+  xline : function(d) {
+    console.log('xline', d)
+  }
 
 }
 
